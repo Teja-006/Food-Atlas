@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Food Atlas - Your District’s Flavour Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
     body {
       margin: 0;
@@ -153,6 +154,14 @@
       color: #ff3c00;
       transform: scale(1.05);
     }
+
+    /* Map Section */
+    #map {
+      width: 100%;
+      height: 500px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
   </style>
 </head>
 <body>
@@ -161,7 +170,9 @@
   <div class="hero">
     <h1>Food Atlas</h1>
     <p>Your District’s Flavour Map — Discover, Taste, Repeat.</p>
-    <button>🍽 Explore Now</button>
+    <button onclick="document.getElementById('map-section').scrollIntoView({behavior: 'smooth'})">
+      🍽 Explore Now
+    </button>
   </div>
 
   <!-- ABOUT -->
@@ -207,6 +218,13 @@
     <p>1️⃣ Open the Map → 2️⃣ Pick Your Spot → 3️⃣ Eat & Share</p>
   </section>
 
+  <!-- MAP SECTION -->
+  <section id="map-section">
+    <h2>Explore the Food Atlas Map</h2>
+    <p>Find food spots around you right here.</p>
+    <div id="map"></div>
+  </section>
+
   <!-- SNEAK PEEK -->
   <section class="sneak">
     <h2>Coming to Your Plate Soon</h2>
@@ -221,7 +239,8 @@
     <button>🍕 Notify Me When It’s Live</button>
   </section>
 
-  <!-- Script for Scroll Animation -->
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
     const sections = document.querySelectorAll("section");
     const revealOnScroll = () => {
@@ -235,7 +254,17 @@
     };
     window.addEventListener("scroll", revealOnScroll);
     revealOnScroll();
-  </script>
 
+    // Initialize Leaflet map
+    const map = L.map("map").setView([28.6139, 77.2090], 13); // New Delhi example
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; <a href='https://www.openstreetmap.org/'>OpenStreetMap</a>",
+    }).addTo(map);
+
+    L.marker([28.6139, 77.2090])
+      .addTo(map)
+      .bindPopup("<b>Yummy Restaurant</b><br>The best food spot in town!")
+      .openPopup();
+  </script>
 </body>
 </html>
