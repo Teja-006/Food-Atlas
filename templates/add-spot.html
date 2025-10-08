@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add a Food Spot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #1a1a1a;
+      color: #e0e0e0;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .header-badge {
+      background: rgba(245, 158, 66, 0.2);
+      color: #f59e42;
+      padding: 8px 20px;
+      border-radius: 25px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 30px;
+    }
+    .header-badge::before {
+      content: '✨';
+      font-size: 1.2rem;
+    }
+    h1 {
+      font-size: 3rem;
+      color: #fff;
+      margin-bottom: 15px;
+      font-weight: 700;
+    }
+    .subtitle {
+      font-size: 1.1rem;
+      color: #b0b0b0;
+      margin-bottom: 50px;
+    }
+    .form-card {
+      background: #2a2a2a;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #3a3a3a;
+    }
+    .section-header::before {
+      content: '📍';
+      font-size: 1.8rem;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #e0e0e0;
+      font-size: 0.95rem;
+    }
+    .required {
+      color: #f59e42;
+      margin-left: 4px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px 16px;
+      background: #3a3a3a;
+      border: 2px solid #4a4a4a;
+      border-radius: 10px;
+      color: #e0e0e0;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.95rem;
+      transition: all 0.3s;
+      outline: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #f59e42;
+      background: #444;
+    }
+    input::placeholder, textarea::placeholder {
+      color: #888;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+    select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23e0e0e0' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      padding-right: 40px;
+    }
+    .submit-button {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #f59e42, #e88d2a);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 6px 20px rgba(245, 158, 66, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 30px;
+    }
+    .submit-button::before {
+      content: '📤';
+      font-size: 1.3rem;
+    }
+    .submit-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(245, 158, 66, 0.4);
+    }
+    .submit-button:active {
+      transform: translateY(0);
+    }
+    .input-hint {
+      font-size: 0.85rem;
+      color: #888;
+      margin-top: 5px;
+    }
+    @media (max-width: 768px) {
+      body {
+        padding: 20px 15px;
+      }
+      h1 {
+        font-size: 2rem;
+      }
+      .subtitle {
+        font-size: 1rem;
+      }
+      .form-card {
+        padding: 25px;
+      }
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header-badge">Share Your Discovery</div>
+    <h1>Add a Food Spot</h1>
+    <p class="subtitle">Help the community discover amazing local food spots by sharing your favorites</p>
+    
+    <div class="form-card">
+      <div class="section-header">Spot Details</div>
+      
+      <form id="addSpotForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="spotName">Spot Name <span class="required">*</span></label>
+            <input type="text" id="spotName" name="spotName" placeholder="e.g., Maria's Tacos" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="category">Category <span class="required">*</span></label>
+            <select id="category" name="category" required>
+              <option value="">Select category</option>
+              <option value="vegetarian">Vegetarian</option>
+              <option value="non-vegetarian">Non-Vegetarian</option>
+              <option value="chinese">Chinese</option>
+              <option value="indian">Indian</option>
+              <option value="italian">Italian</option>
+              <option value="fast-food">Fast Food</option>
+              <option value="cafe">Cafe</option>
+              <option value="bakery">Bakery</option>
+              <option value="dessert">Desserts</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-group full-width">
+          <label for="description">Description</label>
+          <textarea id="description" name="description" placeholder="Tell us what makes this spot special..."></textarea>
+          <div class="input-hint">Share what makes this place unique or your favorite dishes</div>
+        </div>
+        
+        <div class="form-group full-width">
+          <label for="address">Address</label>
+          <input type="text" id="address" name="address" placeholder="123 Food Street, City">
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="latitude">Latitude <span class="required">*</span></label>
+            <input type="number" id="latitude" name="latitude" placeholder="40.7128" step="any" required>
+            <div class="input-hint">Use Google Maps to find coordinates</div>
+          </div>
+          
+          <div class="form-group">
+            <label for="longitude">Longitude <span class="required">*</span></label>
+            <input type="number" id="longitude" name="longitude" placeholder="-74.0060" step="any" required>
+            <div class="input-hint">Right-click on map and select coordinates</div>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="rating">Rating (0-5)</label>
+            <input type="number" id="rating" name="rating" placeholder="4.5" min="0" max="5" step="0.1">
+          </div>
+          
+          <div class="form-group">
+            <label for="imageUrl">Image URL</label>
+            <input type="url" id="imageUrl" name="imageUrl" placeholder="https://...">
+          </div>
+        </div>
+        
+        <button type="submit" class="submit-button">Submit Spot</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+  document.getElementById('addSpotForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const form = e.target;
+
+    // Create a data payload with field names that match the backend API
+    const payload = {
+      name: document.getElementById('spotName').value,
+      category: document.getElementById('category').value,
+      // Your backend uses 'cuisine', so we can map 'category' to it
+      cuisine: document.getElementById('category').value, 
+      description: document.getElementById('description').value,
+      address: document.getElementById('address').value,
+      // Convert coordinates and rating to numbers
+      lat: parseFloat(document.getElementById('latitude').value),
+      lng: parseFloat(document.getElementById('longitude').value),
+      rating: parseFloat(document.getElementById('rating').value) || 0,
+      image: document.getElementById('imageUrl').value
+    };
+
+    try {
+      const response = await fetch('/api/restaurants', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('Success! Your food spot has been saved to the database.');
+        form.reset();
+      } else {
+        // Show a specific error message from the server
+        alert(`Error: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Submission failed:', error);
+      alert('Failed to submit the form. Is the backend server running?');
+    }
+  });
+</script>
+</body>
+</html>

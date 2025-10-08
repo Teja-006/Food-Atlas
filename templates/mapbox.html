@@ -1,500 +1,223 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Hyderabad Restaurants & Map</title>
-<style>
-  /* ======= Refined Internal CSS ======= */
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Hyderabad Restaurants Map</title>
+        <style>
+            :root {
+                --primary-color: #FFA500;
+                --secondary-color: #FF8C00;
+                --accent-color: #FFD700;
+                --bg-dark: #1a1a1a;
+                --bg-darker: #0d0d0d;
+                --text-light: #ffffff;
+                --text-gray: #cccccc;
+                --shadow-light: rgba(255, 165, 0, 0.3);
+                --shadow-dark: rgba(0, 0, 0, 0.5);
+                --font-sans: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            }
 
-  /* Root variables for consistent colors */
-  :root {
-    --primary-color: #1abc9c;
-    --secondary-color: #16a085;
-    --accent-color: #e67e22;
-    --bg-light: #f4f7f6;
-    --text-dark: #2c3e50;
-    --shadow-light: rgba(26, 188, 156, 0.15);
-    --shadow-dark: rgba(44, 62, 80, 0.1);
-    --font-sans: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  }
+            /* Global Styles */
+            * {
+                box-sizing: border-box;
+            }
 
-  /* Global Styles */
-  * {
-    box-sizing: border-box;
-  }
+            body {
+                font-family: var(--font-sans);
+                margin: 0;
+                background: var(--bg-dark);
+                color: var(--text-light);
+                line-height: 1.6;
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+                padding: 40px 20px;
+            }
 
-  body {
-    font-family: var(--font-sans);
-    margin: 0;
-    background: var(--bg-light);
-    color: var(--text-dark);
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
+            a {
+                color: var(--primary-color);
+                text-decoration: none;
+                transition: color 0.3s ease;
+            }
 
-  a {
-    color: var(--primary-color);
-    text-decoration: none;
-    transition: color 0.3s ease;
-  }
-  a:hover,
-  a:focus {
-    color: var(--accent-color);
-    outline: none;
-  }
+            a:hover,
+            a:focus {
+                color: var(--accent-color);
+                outline: none;
+            }
 
-  header {
-    background-color: var(--secondary-color);
-    padding: 25px 30px;
-    color: white;
-    font-weight: 700;
-    font-size: 2rem;
-    text-align: center;
-    letter-spacing: 1.2px;
-    position: relative;
-  }
+            /* Page Title */
+            .page-title {
+                text-align: center;
+                font-size: 2.5rem;
+                font-weight: 700;
+                color: var(--text-light);
+                margin-bottom: 40px;
+                letter-spacing: 1px;
+            }
 
-  /* Back button in header */
-  .back-button {
-    position: absolute;
-    top: 50%;
-    left: 25px;
-    transform: translateY(-50%);
-    background: white;
-    color: var(--secondary-color);
-    border: none;
-    padding: 8px 16px;
-    border-radius: 30px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    cursor: pointer;
-    box-shadow: 0 4px 10px var(--shadow-light);
-    transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-    user-select: none;
-  }
-  .back-button:hover,
-  .back-button:focus {
-    background-color: var(--accent-color);
-    color: white;
-    box-shadow: 0 6px 15px rgba(230, 126, 34, 0.5);
-    outline: none;
-  }
+            /* Map container */
+            .map-container {
+                max-width: 1400px;
+                margin: 0 auto;
+                height: 600px;
+                border-radius: 16px;
+                overflow: hidden;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+                border: 2px solid rgba(255, 165, 0, 0.3);
+            }
 
-  section {
-    max-width: 1200px;
-    margin: 40px auto 60px;
-    padding: 0 30px;
-  }
+            #map {
+                width: 100%;
+                height: 100%;
+                border: none;
+            }
 
-  h2.section-title {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: var(--secondary-color);
-    margin-bottom: 20px;
-    letter-spacing: 0.5px;
-    border-left: 6px solid var(--primary-color);
-    padding-left: 14px;
-  }
+            /* Mapbox popup styles */
+            .mapboxgl-popup {
+                max-width: 300px;
+                font-family: var(--font-sans);
+                font-size: 0.9rem;
+            }
 
-  /* Categories and Featured restaurants containers */
-  .categories,
-  .featured-restaurants {
-    display: flex;
-    overflow-x: auto;
-    gap: 24px;
-    padding-bottom: 8px;
-    scroll-padding: 0 10px;
-  }
+            .mapboxgl-popup-content {
+                padding: 18px 24px;
+                background-color: var(--bg-darker);
+                color: var(--text-light);
+                border-radius: 12px;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
+                border: 2px solid var(--primary-color);
+            }
 
-  /* Hide scrollbar but allow scrolling */
-  .categories::-webkit-scrollbar,
-  .featured-restaurants::-webkit-scrollbar {
-    height: 8px;
-  }
-  .categories::-webkit-scrollbar-track,
-  .featured-restaurants::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .categories::-webkit-scrollbar-thumb,
-  .featured-restaurants::-webkit-scrollbar-thumb {
-    background-color: var(--primary-color);
-    border-radius: 10px;
-  }
+            .mapboxgl-popup-content h4 {
+                margin: 0 0 12px;
+                font-weight: 700;
+                color: var(--primary-color);
+                font-size: 1.1rem;
+            }
 
-  /* Category & Restaurant cards as buttons for accessibility */
-  .category-card,
-  .restaurant-card {
-    flex: 0 0 180px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 14px var(--shadow-dark);
-    padding: 18px 20px;
-    font-weight: 600;
-    font-size: 1.05rem;
-    color: var(--text-dark);
-    cursor: pointer;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    user-select: none;
-    transition:
-      transform 0.3s ease,
-      box-shadow 0.3s ease,
-      background-color 0.3s ease,
-      color 0.3s ease;
-    border: 2px solid transparent;
-  }
-  .category-card:hover,
-  .restaurant-card:hover,
-  .category-card:focus,
-  .restaurant-card:focus {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 28px var(--shadow-dark);
-    outline: none;
-    background-color: var(--primary-color);
-    color: white;
-    border-color: var(--primary-color);
-  }
+            .mapboxgl-popup-content p {
+                margin: 6px 0;
+                color: var(--text-gray);
+            }
 
-  /* Selected category styling */
-  .category-card.selected {
-    background-color: var(--primary-color);
-    color: white;
-    border-color: var(--primary-color);
-    box-shadow: 0 14px 32px rgba(26, 188, 156, 0.7);
-  }
+            .mapboxgl-popup-content a {
+                color: var(--primary-color);
+                font-weight: 600;
+                display: inline-block;
+                margin-top: 8px;
+            }
 
-  /* Featured restaurants links */
-  .restaurant-card {
-    text-decoration: none;
-  }
+            .mapboxgl-popup-content a:hover {
+                color: var(--accent-color);
+            }
 
-  /* Hero Button */
-  .hero-button {
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    padding: 14px 32px;
-    font-size: 1.2rem;
-    font-weight: 700;
-    border-radius: 40px;
-    cursor: pointer;
-    display: block;
-    margin: 20px auto 50px;
-    max-width: 280px;
-    text-align: center;
-    transition: background-color 0.4s ease, box-shadow 0.4s ease;
-    user-select: none;
-    box-shadow: 0 6px 20px rgba(26, 188, 156, 0.4);
-  }
-  .hero-button:hover,
-  .hero-button:focus {
-    background-color: var(--accent-color);
-    box-shadow: 0 8px 28px rgba(230, 126, 34, 0.7);
-    outline: none;
-  }
+            .mapboxgl-popup-close-button {
+                color: var(--text-light);
+                font-size: 20px;
+                padding: 5px 10px;
+            }
 
-  /* Map container */
-  .map-container {
-    max-width: 1200px;
-    height: 480px;
-    margin: 0 auto 60px;
-    padding: 0 30px;
-    border-radius: 14px;
-    border: 3px solid var(--primary-color);
-    box-shadow: 0 12px 36px var(--shadow-light);
-    transition: box-shadow 0.4s ease;
-  }
-  .map-container:hover {
-    box-shadow: 0 20px 48px rgba(26, 188, 156, 0.7);
-  }
+            .mapboxgl-popup-close-button:hover {
+                background-color: var(--primary-color);
+                color: var(--bg-darker);
+            }
 
-  #map {
-    width: 100%;
-    height: 100%;
-    border-radius: 12px;
-  }
+            .mapboxgl-popup-tip {
+                border-top-color: var(--bg-darker) !important;
+                border-bottom-color: var(--bg-darker) !important;
+            }
 
-  /* Mapbox popup styles */
-  .mapboxgl-popup {
-    max-width: 280px;
-    font-family: var(--font-sans);
-    font-size: 0.9rem;
-    color: var(--text-dark);
-    border-radius: 10px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-  }
-  .mapboxgl-popup-content {
-    padding: 16px 22px;
-  }
-  .mapboxgl-popup-content h4 {
-    margin: 0 0 10px;
-    font-weight: 700;
-    color: var(--secondary-color);
-  }
-  .mapboxgl-popup-content p {
-    margin: 0;
-    color: #555;
-  }
+            /* Responsive */
+            @media (max-width: 768px) {
+                body {
+                    padding: 30px 15px;
+                }
+                .page-title {
+                    font-size: 2rem;
+                    margin-bottom: 30px;
+                }
+                .map-container {
+                    height: 500px;
+                }
+            }
 
-  /* Responsive */
-  @media (max-width: 768px) {
-    .categories,
-    .featured-restaurants {
-      flex-wrap: nowrap;
-    }
-    .category-card,
-    .restaurant-card {
-      flex: 0 0 140px;
-      font-size: 0.9rem;
-      padding: 14px 18px;
-    }
-    section {
-      padding: 0 20px;
-      margin: 30px auto 50px;
-    }
-    .map-container {
-      padding: 0 20px;
-      height: 400px;
-    }
-  }
+            @media (max-width: 480px) {
+                body {
+                    padding: 20px 10px;
+                }
+                .page-title {
+                    font-size: 1.6rem;
+                    margin-bottom: 25px;
+                }
+                .map-container {
+                    height: 400px;
+                    border-radius: 12px;
+                }
+            }
+        </style>
+        <!-- Mapbox CSS -->
+        <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+    </head>
+    <body>
+        <h1 class="page-title">Explore Food Locations</h1>
 
-  @media (max-width: 480px) {
-    header {
-      font-size: 1.5rem;
-      padding: 20px 15px;
-    }
-    .back-button {
-      left: 15px;
-      padding: 6px 14px;
-      font-size: 0.8rem;
-    }
-    section {
-      margin: 25px 15px 40px;
-      padding: 0 15px;
-    }
-    .categories,
-    .featured-restaurants {
-      gap: 16px;
-    }
-    .category-card,
-    .restaurant-card {
-      flex: 0 0 90vw !important;
-      font-size: 1rem;
-      padding: 16px 20px;
-    }
-    .map-container {
-      padding: 0 15px;
-      height: 320px;
-    }
-    .hero-button {
-      max-width: 220px;
-      font-size: 1rem;
-    }
-  }
-</style>
-<!-- Mapbox CSS -->
-<link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
-</head>
-<body>
+        <div class="map-container" aria-label="Map showing restaurants in Hyderabad">
+            <div id="map"></div>
+        </div>
 
-<header>
-  Hyderabad Food Explorer
-  <button class="back-button" onclick="history.back()" aria-label="Go back to previous page">← Back</button>
-</header>
+        <!-- Mapbox JS -->
+        <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+        <script>
+            // Your Mapbox access token
+            mapboxgl.accessToken = 'pk.eyJ1IjoiYXNoaXNoZzIyMDkiLCJhIjoiY21hYzdkcjd4MDA2dTJsc2RveHkzMjFhMSJ9.zTrg-kKSZW1UAmvzEvOOCQ';
 
-<section>
-  <h2 class="section-title">Categories</h2>
-  <div class="categories" role="list">
-    <a href="#" data-category="All" class="category-card selected" role="listitem" tabindex="0">All</a>
-    <a href="#" data-category="Biryani" class="category-card" role="listitem" tabindex="0">Biryani</a>
-    <a href="#" data-category="South Indian" class="category-card" role="listitem" tabindex="0">South Indian</a>
-    <a href="#" data-category="Seafood" class="category-card" role="listitem" tabindex="0">Seafood</a>
-    <a href="#" data-category="Barbecue" class="category-card" role="listitem" tabindex="0">Barbecue</a>
-    <a href="#" data-category="Italian" class="category-card" role="listitem" tabindex="0">Italian</a>
-    <a href="#" data-category="Mediterranean" class="category-card" role="listitem" tabindex="0">Mediterranean</a>
-    <a href="#" data-category="Andhra" class="category-card" role="listitem" tabindex="0">Andhra</a>
-    <a href="#" data-category="Mughlai" class="category-card" role="listitem" tabindex="0">Mughlai</a>
-  </div>
-</section>
+            // Initialize the map
+            const map = new mapboxgl.Map({
+                container: "map",
+                style: "mapbox://styles/mapbox/streets-v12",
+                center: [78.4867, 17.3850], // Hyderabad coordinates
+                zoom: 11
+            });
 
-<section>
-  <h2 class="section-title">Featured Restaurants</h2>
-  <div class="featured-restaurants" role="list">
-    <a href="#" class="restaurant-card" tabindex="0" aria-label="Kebab Studio, Cuisine: Barbecue, Rating 4.5 stars">Kebab Studio</a>
-    <a href="#" class="restaurant-card" tabindex="0" aria-label="Paradise Biryani, Cuisine: Biryani, Rating 4.6 stars">Paradise Biryani</a>
-    <a href="#" class="restaurant-card" tabindex="0" aria-label="Chutneys, Cuisine: South Indian, Rating 4.3 stars">Chutneys</a>
-    <a href="#" class="restaurant-card" tabindex="0" aria-label="Ohri's Jiva, Cuisine: Mediterranean, Rating 4.2 stars">Ohri's Jiva</a>
-    <a href="#" class="restaurant-card" tabindex="0" aria-label="Bawarchi, Cuisine: Biryani, Rating 4.1 stars">Bawarchi</a>
-  </div>
-</section>
+            // Add navigation controls
+            map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-<div class="map-container" aria-label="Map showing restaurants in Hyderabad">
-  <div id="map"></div>
-</div>
+            // Load data and add markers
+            map.on('load', async () => {
+                try {
+                    // Fetch restaurant data
+                    const response = await fetch('/api/restaurants');
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const restaurantsFromDB = await response.json();
+                    console.log('Successfully fetched restaurants:', restaurantsFromDB);
 
-<script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
-<script>
-  mapboxgl.accessToken = 'pk.eyJ1IjoiYXNoaXNoZzIyMDkiLCJhIjoiY21hYzdkcjd4MDA2dTJsc2RveHkzMjFhMSJ9.zTrg-kKSZW1UAmvzEvOOCQ';
+                    // Add markers for each restaurant
+                    restaurantsFromDB.forEach(restaurant => {
+                        if (restaurant.lng && restaurant.lat) {
+                            // Create popup content
+                            const popupHTML = `
+                                <h4>${restaurant.name}</h4>
+                                <p><strong>Cuisine:</strong> ${restaurant.cuisine || 'Not specified'}</p>
+                                <p><strong>Rating:</strong> ${restaurant.rating || 'N/A'} ⭐</p>
+                                <p><strong>Address:</strong> ${restaurant.address || 'Not available'}</p>
+                            `;
 
-  const restaurants = [
-    {
-      name: "Paradise Biryani",
-      category: "Biryani",
-      coords: [78.4744, 17.4399],
-      cuisine: "Biryani",
-      rating: 4.6,
-      address: "Shop 1, RTC Cross Roads, Hyderabad",
-      url: "#"
-    },
-    {
-      name: "Bawarchi",
-      category: "Biryani",
-      coords: [78.4747, 17.4146],
-      cuisine: "Biryani",
-      rating: 4.1,
-      address: "Hill Fort Rd, Hyderabad",
-      url: "#"
-    },
-    {
-      name: "Chutneys",
-      category: "South Indian",
-      coords: [78.4867, 17.4297],
-      cuisine: "South Indian",
-      rating: 4.3,
-      address: "Banjara Hills, Hyderabad",
-      url: "#"
-    },
-    {
-      name: "Ohri's Jiva",
-      category: "Mediterranean",
-      coords: [78.4833, 17.4320],
-      cuisine: "Mediterranean",
-      rating: 4.2,
-      address: "Road No. 12, Banjara Hills",
-      url: "#"
-    },
-    {
-      name: "Kebab Studio",
-      category: "Barbecue",
-      coords: [78.4807, 17.4260],
-      cuisine: "Barbecue",
-      rating: 4.5,
-      address: "Jubilee Hills, Hyderabad",
-      url: "#"
-    },
-    {
-      name: "Paradise Seafood",
-      category: "Seafood",
-      coords: [78.4810, 17.4285],
-      cuisine: "Seafood",
-      rating: 4.0,
-      address: "Begumpet, Hyderabad",
-      url: "#"
-    },
-    {
-      name: "Mediterranean Delight",
-      category: "Mediterranean",
-      coords: [78.4890, 17.4270],
-      cuisine: "Mediterranean",
-      rating: 4.3,
-      address: "Hitech City, Hyderabad",
-      url: "#"
-    },
-    {
-      name: "Andhra Spice",
-      category: "Andhra",
-      coords: [78.4920, 17.4120],
-      cuisine: "Andhra",
-      rating: 4.4,
-      address: "Secunderabad, Hyderabad",
-      url: "#"
-    },
-    {
-      name: "Mughlai Mahal",
-      category: "Mughlai",
-      coords: [78.4780, 17.4180],
-      cuisine: "Mughlai",
-      rating: 4.2,
-      address: "Hussain Sagar, Hyderabad",
-      url: "#"
-    }
-    // Add more restaurants here to make up 15-20 if desired
-  ];
-
-  const map = new mapboxgl.Map({
-    container: "map",
-    style: "mapbox://styles/mapbox/streets-v12",
-    center: [78.4867, 17.3850], // Hyderabad center
-    zoom: 12,
-  });
-
-  let markers = [];
-
-  function clearMarkers() {
-    markers.forEach(marker => marker.remove());
-    markers = [];
-  }
-
-  function addMarkers(category) {
-    clearMarkers();
-
-    const filtered = category === "All"
-      ? restaurants
-      : restaurants.filter(r => r.category === category);
-
-    if(filtered.length === 0) {
-      alert("No restaurants found for category: " + category);
-    }
-
-    filtered.forEach(r => {
-      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(
-        `<h4>${r.name}</h4>
-         <p><strong>Cuisine:</strong> ${r.cuisine}</p>
-         <p><strong>Rating:</strong> ${r.rating} ⭐</p>
-         <p><strong>Address:</strong> ${r.address}</p>
-         <a href="${r.url}" target="_blank" rel="noopener noreferrer" style="color:${getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim()}; font-weight:600;">More Info</a>`
-      );
-
-      const marker = new mapboxgl.Marker({ color: 'var(--secondary-color)' })
-        .setLngLat(r.coords)
-        .setPopup(popup)
-        .addTo(map);
-
-      markers.push(marker);
-    });
-
-    if (filtered.length > 0) {
-      map.flyTo({ center: filtered[0].coords, zoom: 13 });
-    } else {
-      map.flyTo({ center: [78.4867, 17.3850], zoom: 12 });
-    }
-  }
-
-  // Initial display with all restaurants
-  map.on("load", () => {
-    addMarkers("All");
-  });
-
-  // Categories interaction
-  document.querySelectorAll('.category-card').forEach(card => {
-    card.addEventListener('click', e => {
-      e.preventDefault();
-      document.querySelectorAll('.category-card').forEach(c => c.classList.remove('selected'));
-      card.classList.add('selected');
-      const category = card.getAttribute('data-category');
-      addMarkers(category);
-    });
-    card.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        card.click();
-      }
-    });
-  });
-</script>
-</body>
+                            // Create and add marker with popup
+                            const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(popupHTML);
+                            new mapboxgl.Marker({ color: '#FFA500' })
+                                .setLngLat([restaurant.lng, restaurant.lat])
+                                .setPopup(popup)
+                                .addTo(map);
+                        }
+                    });
+                } catch (error) {
+                    console.error("Error loading restaurant data:", error);
+                    alert("Could not load restaurant data. Please ensure the backend server is running and accessible.");
+                }
+            });
+        </script>
+    </body>
 </html>
