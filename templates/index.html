@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Food Atlas</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+      color: #e8eaf6;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 80%, rgba(255, 138, 101, 0.1) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    .floating-particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+    
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: rgba(255, 138, 101, 0.6);
+      border-radius: 50%;
+      animation: float 15s infinite ease-in-out;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-100vh) translateX(50px); opacity: 0; }
+    }
+    
+    header {
+      background: rgba(15, 12, 41, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 138, 101, 0.2);
+      color: white;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      animation: slideDown 0.6s ease;
+    }
+    
+    @keyframes slideDown {
+      from { transform: translateY(-100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    header img {
+      height: 50px;
+      filter: drop-shadow(0 0 10px rgba(255, 138, 101, 0.6));
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    header h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ff8a65 0%, #ff6f00 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 1px;
+    }
+    
+    .search-container {
+      display: flex;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 138, 101, 0.3);
+      border-radius: 30px;
+      padding: 8px 16px;
+      width: 350px;
+      transition: all 0.3s;
+    }
+    
+    .search-container:focus-within {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: #ff8a65;
+      box-shadow: 0 0 20px rgba(255, 138, 101, 0.3);
+    }
+    
+    .search-container input {
+      background: transparent;
+      border: none;
+      color: white;
+      padding: 8px 12px;
+      flex: 1;
+      outline: none;
+      font-family: 'Poppins', sans-serif;
+    }
+    
+    .search-container input::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .search-container button {
+      background: linear-gradient(135deg, #ff8a65 0%, #ff6f00 100%);
+      border: none;
+      color: white;
+      cursor: pointer;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s;
+    }
+    
+    .search-container button:hover {
+      transform: scale(1.1) rotate(10deg);
+    }
+    
+    .tabs {
+      display: flex;
+      justify-content: center;
+      background: rgba(15, 12, 41, 0.8);
+      backdrop-filter: blur(10px);
+      padding: 0;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      position: relative;
+      z-index: 50;
+      border-bottom: 1px solid rgba(255, 138, 101, 0.2);
+    }
+    
+    .tab {
+      padding: 20px 40px;
+      cursor: pointer;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #b0b3c1;
+      font-size: 0.95rem;
+      transition: all 0.3s;
+      position: relative;
+      letter-spacing: 1px;
+    }
+    
+    .tab i {
+      margin-right: 10px;
+      transition: transform 0.3s;
+    }
+    
+    .tab:hover {
+      color: #ff8a65;
+      background: rgba(255, 138, 101, 0.1);
+    }
+    
+    .tab:hover i {
+      transform: scale(1.2);
+    }
+    
+    .tab.active {
+      color: #fff;
+      background: linear-gradient(135deg, rgba(255, 138, 101, 0.2) 0%, rgba(255, 111, 0, 0.2) 100%);
+    }
+    
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60%;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, #ff8a65, transparent);
+      box-shadow: 0 0 10px #ff8a65;
+    }
+    
+    .section {
+      display: none;
+      padding: 60px 30px;
+      transition: all 0.5s ease;
+      opacity: 0;
+      transform: translateY(30px);
+      position: relative;
+      z-index: 10;
+    }
+    
+    .section.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+      animation: fadeInUp 0.6s ease;
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .hero-section {
+      background-image: linear-gradient(135deg, rgba(15, 12, 41, 0.85) 0%, rgba(48, 43, 99, 0.85) 100%), 
+                        url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      color: white;
+      padding: 120px 20px;
+      margin: -60px -30px 60px -30px;
+      text-align: center;
+      border-radius: 0 0 30px 30px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .hero-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center, transparent 0%, rgba(15, 12, 41, 0.6) 100%);
+    }
+    
+    .hero-content {
+      position: relative;
+      z-index: 2;
+    }
+    
+    .hero-section h2 {
+      font-size: 3.5rem;
+      margin-bottom: 25px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 0%, #ff8a65 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: glow 2s ease-in-out infinite;
+    }
+    
+    @keyframes glow {
+      0%, 100% { filter: drop-shadow(0 0 10px rgba(255, 138, 101, 0.5)); }
+      50% { filter: drop-shadow(0 0 20px rgba(255, 138, 101, 0.8)); }
+    }
+    
+    .hero-section p {
+      font-size: 1.3rem;
+      max-width: 700px;
+      margin: 0 auto 40px;
+      opacity: 0.95;
+      line-height: 1.6;
+    }
+    
+    .hero-button {
+      background: linear-gradient(135deg, #ff8a65 0%, #ff6f00 100%);
+      color: white;
+      padding: 16px 40px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1.1rem;
+      transition: all 0.3s;
+      display: inline-block;
+      box-shadow: 0 8px 30px rgba(255, 138, 101, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .hero-button::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+    
+    .hero-button:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+    
+    .hero-button:hover {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 12px 40px rgba(255, 138, 101, 0.6);
+    }
+    
+    .section-title {
+      text-align: center;
+      margin: 50px 0 40px;
+      font-size: 2.5rem;
+      color: #fff;
+      font-weight: 700;
+      position: relative;
+    }
+    
+    .section-title::after {
+      content: '';
+      display: block;
+      width: 80px;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, #ff8a65, transparent);
+      margin: 20px auto;
+      border-radius: 2px;
+      box-shadow: 0 0 10px rgba(255, 138, 101, 0.5);
+    }
+    
+    .categories {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 30px;
+      margin-top: 40px;
+      padding: 0 20px;
+    }
+    
+    .category-card {
+      height: 220px;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 138, 101, 0.2);
+      border-radius: 20px;
+      overflow: hidden;
+      position: relative;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      cursor: pointer;
+    }
+    
+    .category-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(255, 138, 101, 0.1) 0%, rgba(120, 119, 198, 0.1) 100%);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    
+    .category-card:hover::before {
+      opacity: 1;
+    }
+    
+    .category-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s ease;
+    }
+    
+    .category-card .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(to bottom, rgba(15, 12, 41, 0.3) 0%, rgba(15, 12, 41, 0.9) 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 25px;
+      transition: background 0.3s;
+    }
+    
+    .category-card span {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+    }
+    
+    .category-card p {
+      color: rgba(255, 255, 255, 0.85);
+      font-size: 0.9rem;
+      margin: 0;
+      transform: translateY(30px);
+      opacity: 0;
+      transition: all 0.4s;
+    }
+    
+    .category-card:hover {
+      transform: translateY(-15px) scale(1.02);
+      box-shadow: 0 20px 50px rgba(255, 138, 101, 0.3);
+      border-color: #ff8a65;
+    }
+    
+    .category-card:hover img {
+      transform: scale(1.15);
+    }
+    
+    .category-card:hover .overlay {
+      background: linear-gradient(to bottom, rgba(15, 12, 41, 0.4) 0%, rgba(48, 43, 99, 0.95) 100%);
+    }
+    
+    .category-card:hover p {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    
+    .featured-section {
+      margin-top: 80px;
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(10px);
+      padding: 50px 40px;
+      border-radius: 30px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 138, 101, 0.1);
+    }
+    
+    .featured-restaurants {
+      display: flex;
+      overflow-x: auto;
+      gap: 30px;
+      padding: 20px 5px 30px;
+      scrollbar-width: thin;
+      scrollbar-color: #ff8a65 rgba(255, 255, 255, 0.1);
+    }
+    
+    .featured-restaurants::-webkit-scrollbar {
+      height: 10px;
+    }
+    
+    .featured-restaurants::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+    }
+    
+    .featured-restaurants::-webkit-scrollbar-thumb {
+      background: linear-gradient(90deg, #ff8a65, #ff6f00);
+      border-radius: 10px;
+    }
+    
+    .restaurant-card {
+      min-width: 320px;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 138, 101, 0.2);
+      border-radius: 20px;
+      overflow: hidden;
+      transition: all 0.4s;
+      position: relative;
+    }
+    
+    .restaurant-card::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(135deg, #ff8a65, #7877c6);
+      border-radius: 20px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: -1;
+    }
+    
+    .restaurant-card:hover::before {
+      opacity: 1;
+    }
+    
+    .restaurant-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 15px 40px rgba(255, 138, 101, 0.3);
+    }
+    
+    .restaurant-image {
+      height: 200px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .restaurant-image::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(to bottom, transparent 0%, rgba(15, 12, 41, 0.3) 100%);
+    }
+    
+    .restaurant-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s ease;
+    }
+    
+    .restaurant-card:hover .restaurant-image img {
+      transform: scale(1.15);
+    }
+    
+    .restaurant-info {
+      padding: 25px;
+    }
+    
+    .restaurant-name {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+    
+    .restaurant-rating {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 8px;
+    }
+    
+    .stars {
+      color: #ff8a65;
+      font-size: 1.1rem;
+      text-shadow: 0 0 10px rgba(255, 138, 101, 0.5);
+    }
+    
+    .rating-number {
+      background: linear-gradient(135deg, #ff8a65 0%, #ff6f00 100%);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    
+    .restaurant-cuisine {
+      font-size: 0.95rem;
+      color: #b0b3c1;
+      margin-bottom: 12px;
+    }
+    
+    .restaurant-location {
+      display: flex;
+      align-items: center;
+      font-size: 0.9rem;
+      color: #9091a1;
+      gap: 6px;
+    }
+    
+    .restaurant-location i {
+      color: #ff8a65;
+    }
+    
+    .map-container {
+      height: 700px;
+      border-radius: 25px;
+      overflow: hidden;
+      box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
+      border: 2px solid rgba(255, 138, 101, 0.3);
+    }
+    
+    #leafletMap {
+      height: 100%;
+      width: 100%;
+      filter: brightness(0.9) contrast(1.1);
+    }
+    
+    footer {
+      background: rgba(15, 12, 41, 0.95);
+      backdrop-filter: blur(10px);
+      color: white;
+      text-align: center;
+      padding: 50px 30px 30px;
+      margin-top: 80px;
+      border-top: 1px solid rgba(255, 138, 101, 0.2);
+      position: relative;
+      z-index: 10;
+    }
+    
+    .footer-content {
+      display: flex;
+      justify-content: space-between;
+      max-width: 1200px;
+      margin: 0 auto 40px;
+      flex-wrap: wrap;
+      gap: 40px;
+    }
+    
+    .footer-section {
+      flex: 1;
+      min-width: 250px;
+    }
+    
+    .footer-section h3 {
+      margin-bottom: 20px;
+      font-size: 1.3rem;
+      position: relative;
+      padding-bottom: 12px;
+      font-weight: 700;
+    }
+    
+    .footer-section h3::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, #ff8a65, transparent);
+    }
+    
+    .footer-section a {
+      color: #b0b3c1;
+      text-decoration: none;
+      transition: all 0.3s;
+      display: block;
+      margin-bottom: 10px;
+    }
+    
+    .footer-section a:hover {
+      color: #ff8a65;
+      transform: translateX(5px);
+    }
+    
+    .footer-bottom {
+      padding-top: 30px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.95rem;
+      color: #9091a1;
+    }
+    
+    .social-links {
+      margin-top: 20px;
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+    }
+    
+    .social-links a {
+      width: 45px;
+      height: 45px;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 138, 101, 0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      transition: all 0.3s;
+    }
+    
+    .social-links a:hover {
+      background: linear-gradient(135deg, #ff8a65 0%, #ff6f00 100%);
+      transform: translateY(-5px) rotate(10deg);
+      box-shadow: 0 10px 25px rgba(255, 138, 101, 0.4);
+      border-color: transparent;
+    }
+    
+    @media (max-width: 768px) {
+      header {
+        padding: 15px 20px;
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .search-container {
+        width: 100%;
+      }
+      
+      .tab {
+        padding: 15px 20px;
+        font-size: 0.85rem;
+      }
+      
+      .hero-section h2 {
+        font-size: 2.2rem;
+      }
+      
+      .hero-section p {
+        font-size: 1.1rem;
+      }
+      
+      .categories {
+        grid-template-columns: 1fr;
+        padding: 0;
+      }
+      
+      .footer-content {
+        flex-direction: column;
+        text-align: center;
+      }
+      
+      .footer-section h3::after {
+        left: 50%;
+        transform: translateX(-50%);
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="floating-particles"></div>
+
+<header>
+  <div class="logo-container">
+    <img src="https://cdn-icons-png.flaticon.com/512/684/684908.png" alt="Food Atlas Logo">
+    <h1>Food Atlas</h1>
+  </div>
+  <div class="search-container">
+    <input type="text" placeholder="Search for restaurants, cuisines...">
+    <button><i class="fas fa-search"></i></button>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="showSection('home')"><i class="fas fa-home"></i> Home</div>
+  <div class="tab" onclick="showSection('map')"><i class="fas fa-map-marked-alt"></i> Map</div>
+  <div class="tab" onclick="showSection('addspot')"><i class="fas fa-plus-circle"></i> Add Spot</div>
+</div>
+
+<div id="home" class="section active">
+  <div class="hero-section">
+    <div class="hero-content">
+      <h2>Discover Amazing Food Near You</h2>
+      <p>Explore thousands of restaurants, cafes, and food experiences across your city with Food Atlas</p>
+      <a href="#" class="hero-button">Find Restaurants</a>
+    </div>
+  </div>
+  
+  <h2 class="section-title">Browse Categories</h2>
+  <div class="categories">
+    <div class="category-card">
+      <img src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80" alt="Vegetarian">
+      <div class="overlay">
+        <span>Vegetarian</span>
+        <p>Discover delicious meat-free cuisine</p>
+      </div>
+    </div>
+    <div class="category-card">
+      <img src="https://images.unsplash.com/photo-1544025162-d76694265947?ixlib=rb-1.2.1&auto=format&fit=crop&w=1349&q=80" alt="Non-Vegetarian">
+      <div class="overlay">
+        <span>Non-Vegetarian</span>
+        <p>Explore protein-rich delicacies</p>
+      </div>
+    </div>
+    <div class="category-card">
+      <img src="https://images.unsplash.com/photo-1563245372-f21724e3856d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Chinese">
+      <div class="overlay">
+        <span>Chinese</span>
+        <p>Experience authentic Asian flavors</p>
+      </div>
+    </div>
+    <div class="category-card">
+      <img src="https://images.unsplash.com/photo-1585937421612-70a008356fbe?ixlib=rb-1.2.1&auto=format&fit=crop&w=636&q=80" alt="Indian">
+      <div class="overlay">
+        <span>Indian</span>
+        <p>Taste rich and spicy traditional dishes</p>
+      </div>
+    </div>
+    <div class="category-card">
+      <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Italian">
+      <div class="overlay">
+        <span>Italian</span>
+        <p>Enjoy pizza, pasta and more</p>
+      </div>
+    </div>
+    <div class="category-card">
+      <img src="https://images.unsplash.com/photo-1571091718767-18b5b1457add?ixlib=rb-1.2.1&auto=format&fit=crop&w=1352&q=80" alt="Fast Food">
+      <div class="overlay">
+        <span>Fast Food</span>
+        <p>Quick and tasty bites for everyone</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="featured-section">
+    <h2 class="section-title">Featured Restaurants</h2>
+    <div class="featured-restaurants">
+      <div class="restaurant-card">
+        <div class="restaurant-image">
+          <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Woxsen Bistro">
+        </div>
+        <div class="restaurant-info">
+          <div class="restaurant-name">Woxsen Bistro</div>
+          <div class="restaurant-rating">
+            <div class="stars">★★★★☆</div>
+            <div class="rating-number">4.2</div>
+          </div>
+          <div class="restaurant-cuisine">Multi-cuisine, Bakery, Cafe</div>
+          <div class="restaurant-location">
+            <i class="fas fa-map-marker-alt"></i> Woxsen University Campus
+          </div>
+        </div>
+      </div>
+      <div class="restaurant-card">
+        <div class="restaurant-image">
+          <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Paradise Biryani">
+        </div>
+        <div class="restaurant-info">
+          <div class="restaurant-name">Paradise Biryani</div>
+          <div class="restaurant-rating">
+            <div class="stars">★★★★★</div>
+            <div class="rating-number">4.8</div>
+          </div>
+          <div class="restaurant-cuisine">Indian, Biryani, Mughlai</div>
+          <div class="restaurant-location">
+            <i class="fas fa-map-marker-alt"></i> Hyderabad
+          </div>
+        </div>
+      </div>
+      <div class="restaurant-card">
+        <div class="restaurant-image">
+          <img src="https://images.unsplash.com/photo-1552566626-52f8b828add9?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Subway">
+        </div>
+        <div class="restaurant-info">
+          <div class="restaurant-name">Subway</div>
+          <div class="restaurant-rating">
+            <div class="stars">★★★★☆</div>
+            <div class="rating-number">4.0</div>
+          </div>
+          <div class="restaurant-cuisine">Fast Food, Sandwiches, Salads</div>
+          <div class="restaurant-location">
+            <i class="fas fa-map-marker-alt"></i> Multiple Locations
+          </div>
+        </div>
+      </div>
+      <div class="restaurant-card">
+        <div class="restaurant-image">
+          <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Pizza Hut">
+        </div>
+        <div class="restaurant-info">
+          <div class="restaurant-name">Pizza Hut</div>
+          <div class="restaurant-rating">
+            <div class="stars">★★★★☆</div>
+            <div class="rating-number">4.3</div>
+          </div>
+          <div class="restaurant-cuisine">Italian, Pizza, Pasta</div>
+          <div class="restaurant-location">
+            <i class="fas fa-map-marker-alt"></i> City Center
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="map" class="section">
+  <h2 class="section-title">Explore Food Locations</h2>
+  <div class="map-container">
+    <div id="leafletMap"></div>
+  </div>
+</div>
+
+<div id="addspot" class="section">
+  <h2 class="section-title">Add Your Favorite Spot</h2>
+  <div style="max-width: 600px; margin: 0 auto; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); padding: 40px; border-radius: 20px; border: 1px solid rgba(255, 138, 101, 0.2);">
+    <form id="addSpotForm">
+      <div style="margin-bottom: 25px;">
+        <label style="display: block; margin-bottom: 10px; color: #fff; font-weight: 600;">Restaurant Name</label>
+        <input type="text" id="spotName" required style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255, 138, 101, 0.3); background: rgba(255, 255, 255, 0.1); color: white; font-family: 'Poppins', sans-serif;">
+      </div>
+      <div style="margin-bottom: 25px;">
+        <label style="display: block; margin-bottom: 10px; color: #fff; font-weight: 600;">Cuisine Type</label>
+        <input type="text" id="spotCuisine" required style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255, 138, 101, 0.3); background: rgba(255, 255, 255, 0.1); color: white; font-family: 'Poppins', sans-serif;">
+      </div>
+      <div style="margin-bottom: 25px;">
+        <label style="display: block; margin-bottom: 10px; color: #fff; font-weight: 600;">Location</label>
+        <input type="text" id="spotLocation" required style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255, 138, 101, 0.3); background: rgba(255, 255, 255, 0.1); color: white; font-family: 'Poppins', sans-serif;">
+      </div>
+      <div style="margin-bottom: 25px;">
+        <label style="display: block; margin-bottom: 10px; color: #fff; font-weight: 600;">Rating (1-5)</label>
+        <input type="number" id="spotRating" min="1" max="5" step="0.1" required style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255, 138, 101, 0.3); background: rgba(255, 255, 255, 0.1); color: white; font-family: 'Poppins', sans-serif;">
+      </div>
+      <button type="submit" style="width: 100%; padding: 15px; background: linear-gradient(135deg, #ff8a65 0%, #ff6f00 100%); color: white; border: none; border-radius: 50px; font-weight: 700; font-size: 1.1rem; cursor: pointer; transition: all 0.3s; box-shadow: 0 8px 30px rgba(255, 138, 101, 0.4);">
+        Add Restaurant
+      </button>
+    </form>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-content">
+    <div class="footer-section">
+      <h3>About Food Atlas</h3>
+      <p style="color: #b0b3c1; line-height: 1.6;">Your ultimate guide to discovering the best food experiences in your city. Join thousands of food lovers today!</p>
+    </div>
+    <div class="footer-section">
+      <h3>Quick Links</h3>
+      <a href="#">About Us</a>
+      <a href="#">Contact</a>
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms of Service</a>
+    </div>
+    <div class="footer-section">
+      <h3>Connect With Us</h3>
+      <div class="social-links">
+        <a href="#"><i class="fab fa-facebook-f"></i></a>
+        <a href="#"><i class="fab fa-twitter"></i></a>
+        <a href="#"><i class="fab fa-instagram"></i></a>
+        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    &copy; 2025 Food Atlas. All rights reserved.
+  </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+  // Create floating particles
+  const particlesContainer = document.querySelector('.floating-particles');
+  for (let i = 0; i < 30; i++) {
+    const particle = document.createElement('div');
+    particle.className = 'particle';
+    particle.style.left = Math.random() * 100 + '%';
+    particle.style.animationDelay = Math.random() * 15 + 's';
+    particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+    particlesContainer.appendChild(particle);
+  }
+
+  // Tab switching functionality
+  function showSection(sectionId) {
+    const sections = document.querySelectorAll('.section');
+    const tabs = document.querySelectorAll('.tab');
+    
+    sections.forEach(section => {
+        section.classList.remove('active');
+    });
+    
+    tabs.forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    document.getElementById(sectionId).classList.add('active');
+    event.target.closest('.tab').classList.add('active');
+    
+    if (sectionId === 'map') {
+        setTimeout(initMap, 100);
+    }
+  }
+
+  // Initialize Leaflet Map
+  let map;
+  function initMap() {
+    if (map) return;
+    
+    map = L.map('leafletMap').setView([17.4833, 78.3167], 12);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    // Sample restaurant locations
+    const restaurants = [
+        { name: 'Woxsen Bistro', lat: 17.4833, lng: 78.3167, cuisine: 'Multi-cuisine, Cafe' },
+        { name: 'Paradise Biryani', lat: 17.4400, lng: 78.3489, cuisine: 'Indian, Biryani' },
+        { name: 'Subway', lat: 17.4239, lng: 78.4738, cuisine: 'Fast Food, Sandwiches' },
+        { name: 'Pizza Hut', lat: 17.4065, lng: 78.4772, cuisine: 'Italian, Pizza' }
+    ];
+    
+    restaurants.forEach(restaurant => {
+        const marker = L.marker([restaurant.lat, restaurant.lng]).addTo(map);
+        marker.bindPopup(`<strong>${restaurant.name}</strong><br>${restaurant.cuisine}`);
+    });
+  }
+
+  // Add Spot Form Submission
+document.getElementById('addSpotForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  const form = e.target;
+  const name = document.getElementById('spotName').value;
+  const cuisine = document.getElementById('spotCuisine').value;
+  const address = document.getElementById('spotLocation').value;
+  const rating = parseFloat(document.getElementById('spotRating').value);
+
+  // Data to be sent to the backend.
+  // Your backend requires lat, lng, and description, so we add placeholders.
+  const restaurantData = {
+    name: name,
+    cuisine: cuisine,
+    address: address,
+    rating: rating,
+    description: "A new spot added by a user.", // Placeholder description
+    lat: 0, // Placeholder latitude
+    lng: 0  // Placeholder longitude
+  };
+
+  try {
+    const response = await fetch('http://localhost:5000/api/restaurants', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(restaurantData),
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      alert(`Restaurant "${name}" was successfully added to the database!`);
+      form.reset();
+    } else {
+      // Show an error message from the server
+      alert(`Error: ${result.error}`);
+    }
+  } catch (error) {
+    console.error('Submission failed:', error);
+    alert('Failed to submit the form. Is the backend server running?');
+  }
+});
+
+  // Search functionality
+  document.querySelector('.search-container button').addEventListener('click', function() {
+    const searchQuery = document.querySelector('.search-container input').value;
+    if (searchQuery) {
+        alert('Searching for: ' + searchQuery);
+    }
+  });
+
+  document.querySelector('.search-container input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        const searchQuery = this.value;
+        if (searchQuery) {
+            alert('Searching for: ' + searchQuery);
+        }
+    }
+  });
+</script>
+
+</body>
+</html>
