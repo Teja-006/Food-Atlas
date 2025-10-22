@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session
 from flask_cors import CORS
 from pymongo import MongoClient
 from bson import ObjectId
@@ -8,37 +8,133 @@ from datetime import datetime
 app = Flask(__name__)
 CORS(app)
 
+# Secret key for session management
+app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-production')
+
 # MongoDB Configuration
-MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://localhost:27017/')
+MONGO_URI = 'mongodb://localhost:27017/'
 client = MongoClient(MONGO_URI)
-db = client['FoodAtliss']
-print("Connected to MongoDB at", MONGO_URI)
+db = client['FoodAtlas']
+print("✅ Connected to MongoDB at", MONGO_URI)
+
 # Collections
 restaurants_collection = db['restaurants']
-categories_collection = db['categories']
-reviews_collection = db['reviews']
+users_collection = db['users']
 
-# Helper function
+# Helper function to serialize MongoDB documents
 def serialize_doc(doc):
     if doc and '_id' in doc:
         doc['_id'] = str(doc['_id'])
     return doc
 
-# ============ MAIN ROUTES ============
-
+# ============ AUTHENTICATION ROUTES ============
 @app.route('/')
-def index():
+def loginpage():
+    """Serve the login page"""
+    return render_template('loginpage.html')
+
+@app.route('/register', methods=['POST'])
+def register():
+    """Register a new user"""
+    try:
+        data = request.json
+        
+        if not data.get('email') or not data.get('password'):
+            return jsonify({'error': 'Email and password are required'}), 400
+        
+        # Check if user already exists
+        existing_user = users_collection.find_one({'email': data['email']})
+        if existing_user:
+            return jsonify({'error': 'Email already registered'}), 400
+        
+        # Create new user (password saved normally)
+        user = {
+            'name': data.get('name', ''),
+            'email': data['email'],
+            'password': data['password'],
+            'created_at': datetime.utcnow()
+        }
+        
+        result = users_collection.insert_one(user)
+        
+        # Set session
+        session['user_id'] = str(result.inserted_id)
+        session['user_email'] = data['email']
+        session['user_name'] = data.get('name', '')
+        
+        return jsonify({
+            'message': 'Registration successful',
+            'user_id': str(result.inserted_id)
+        }), 201
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/login', methods=['POST'])
+def login():
+    """Login user"""
+    try:
+        data = request.json
+        
+        if not data.get('email') or not data.get('password'):
+            return jsonify({'error': 'Email and password are required'}), 400
+        
+        # Find user
+        user = users_collection.find_one({'email': data['email']})
+        
+        if not user:
+            return jsonify({'error': 'Invalid email or password'}), 401
+        
+        # Check password (no hash)
+        if user['password'] != data['password']:
+            return jsonify({'error': 'Invalid email or password'}), 401
+        
+        # Set session
+        session['user_id'] = str(user['_id'])
+        session['user_email'] = user['email']
+        session['user_name'] = user.get('name', '')
+        
+        return jsonify({
+            'message': 'Login successful',
+            'user': {
+                'id': str(user['_id']),
+                'email': user['email'],
+                'name': user.get('name', '')
+            }
+        }), 200
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    """Logout user"""
+    session.clear()
+    return jsonify({'message': 'Logged out successfully'}), 200
+
+@app.route('/check-auth', methods=['GET'])
+def check_auth():
+    """Check if user is authenticated"""
+    if 'user_id' in session:
+        return jsonify({
+            'authenticated': True,
+            'user': {
+                'id': session['user_id'],
+                'email': session['user_email'],
+                'name': session.get('user_name', '')
+            }
+        }), 200
+    return jsonify({'authenticated': False}), 401
+
+# ============ PAGE ROUTES ============
+@app.route('/homepage')
+def homepage():
     """Serve the main homepage"""
     return render_template('index.html')
 
-@app.route('/map')
+@app.route('/mappage')
 def map_page():
     """Serve the map page"""
-    return render_template('mapbox.html')
-
-@app.route('/mappage')
-def map_page_alt():
-    """Alternative route for map page"""
     return render_template('mapbox.html')
 
 @app.route('/addspotpage')
@@ -46,28 +142,25 @@ def add_spot_page():
     """Serve the add spot page"""
     return render_template('add-spot.html')
 
-# ============ RESTAURANT ROUTES ============
-
+# ============ RESTAURANT API ROUTES ============
 @app.route('/api/restaurants', methods=['GET'])
 def get_restaurants():
-    """Get all restaurants or filter by category/cuisine/location"""
+    """Get all restaurants with optional filters"""
     try:
         category = request.args.get('category')
         cuisine = request.args.get('cuisine')
         search = request.args.get('search')
         location = request.args.get('location')
-        
+        limit = int(request.args.get('limit', 0))
+
         query = {}
-        
-        if category and category != 'All':
-            query['category'] = category
-        
+
+        if category and category.lower() != 'all':
+            query['category'] = {'$regex': category, '$options': 'i'}
         if cuisine:
             query['cuisine'] = {'$regex': cuisine, '$options': 'i'}
-        
         if location:
             query['address'] = {'$regex': location, '$options': 'i'}
-        
         if search:
             query['$or'] = [
                 {'name': {'$regex': search, '$options': 'i'}},
@@ -75,12 +168,18 @@ def get_restaurants():
                 {'cuisine': {'$regex': search, '$options': 'i'}},
                 {'address': {'$regex': search, '$options': 'i'}}
             ]
-        
-        restaurants = list(restaurants_collection.find(query))
+
+        cursor = restaurants_collection.find(query).sort('rating', -1)
+        if limit > 0:
+            cursor = cursor.limit(limit)
+
+        restaurants = list(cursor)
         return jsonify([serialize_doc(r) for r in restaurants]), 200
-    
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+    
 
 @app.route('/api/restaurants/<restaurant_id>', methods=['GET'])
 def get_restaurant(restaurant_id):
@@ -107,6 +206,10 @@ def add_restaurant():
         
         data['created_at'] = datetime.utcnow()
         data['updated_at'] = datetime.utcnow()
+        
+        # Add user info if logged in
+        if 'user_id' in session:
+            data['added_by'] = session['user_id']
         
         if 'rating' not in data:
             data['rating'] = 0
@@ -148,99 +251,18 @@ def delete_restaurant(restaurant_id):
         result = restaurants_collection.delete_one({'_id': ObjectId(restaurant_id)})
         
         if result.deleted_count > 0:
-            reviews_collection.delete_many({'restaurant_id': restaurant_id})
             return jsonify({'message': 'Restaurant deleted successfully'}), 200
         return jsonify({'error': 'Restaurant not found'}), 404
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ============ CATEGORY ROUTES ============
-
-@app.route('/api/categories', methods=['GET'])
-def get_categories():
-    """Get all categories"""
-    try:
-        categories = list(categories_collection.find())
-        return jsonify([serialize_doc(c) for c in categories]), 200
-    
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/categories', methods=['POST'])
-def add_category():
-    """Add a new category"""
-    try:
-        data = request.json
-        
-        if 'name' not in data:
-            return jsonify({'error': 'Category name is required'}), 400
-        
-        result = categories_collection.insert_one(data)
-        return jsonify({
-            'message': 'Category added successfully',
-            'id': str(result.inserted_id)
-        }), 201
-    
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ============ REVIEW ROUTES ============
-
-@app.route('/api/restaurants/<restaurant_id>/reviews', methods=['GET'])
-def get_reviews(restaurant_id):
-    """Get all reviews for a restaurant"""
-    try:
-        reviews = list(reviews_collection.find({'restaurant_id': restaurant_id}).sort('created_at', -1))
-        return jsonify([serialize_doc(r) for r in reviews]), 200
-    
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@app.route('/api/restaurants/<restaurant_id>/reviews', methods=['POST'])
-def add_review(restaurant_id):
-    """Add a review for a restaurant"""
-    try:
-        data = request.json
-        data['restaurant_id'] = restaurant_id
-        data['created_at'] = datetime.utcnow()
-        
-        if 'rating' not in data or 'comment' not in data:
-            return jsonify({'error': 'Rating and comment are required'}), 400
-        
-        if data['rating'] < 1 or data['rating'] > 5:
-            return jsonify({'error': 'Rating must be between 1 and 5'}), 400
-        
-        result = reviews_collection.insert_one(data)
-        
-        all_reviews = list(reviews_collection.find({'restaurant_id': restaurant_id}))
-        avg_rating = sum(r['rating'] for r in all_reviews) / len(all_reviews)
-        
-        restaurants_collection.update_one(
-            {'_id': ObjectId(restaurant_id)},
-            {'$set': {
-                'rating': round(avg_rating, 1),
-                'review_count': len(all_reviews)
-            }}
-        )
-        
-        return jsonify({
-            'message': 'Review added successfully',
-            'id': str(result.inserted_id),
-            'new_avg_rating': round(avg_rating, 1)
-        }), 201
-    
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-# ============ SEARCH ROUTE ============
-
+# ============ SEARCH & STATS ============
 @app.route('/api/search', methods=['GET'])
 def search():
     """Advanced search endpoint"""
     try:
         query_text = request.args.get('q', '')
-        
         if not query_text:
             return jsonify([]), 200
         
@@ -260,29 +282,22 @@ def search():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ============ UTILITY ROUTES ============
-
 @app.route('/api/stats', methods=['GET'])
 def get_stats():
     """Get database statistics"""
     try:
         stats = {
             'total_restaurants': restaurants_collection.count_documents({}),
-            'total_categories': categories_collection.count_documents({}),
-            'total_reviews': reviews_collection.count_documents({}),
+            'total_users': users_collection.count_documents({}),
             'avg_rating': 0,
             'top_rated': []
         }
         
-        # Calculate average rating
-        pipeline = [
-            {'$group': {'_id': None, 'avg_rating': {'$avg': '$rating'}}}
-        ]
+        pipeline = [{'$group': {'_id': None, 'avg_rating': {'$avg': '$rating'}}}]
         result = list(restaurants_collection.aggregate(pipeline))
         if result:
             stats['avg_rating'] = round(result[0]['avg_rating'], 1)
         
-        # Get top 5 rated restaurants
         top_rated = list(restaurants_collection.find().sort('rating', -1).limit(5))
         stats['top_rated'] = [{'name': r['name'], 'rating': r['rating']} for r in top_rated]
         
@@ -291,43 +306,7 @@ def get_stats():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ============ DATABASE INFO ROUTE ============
-
-@app.route('/api/db-info', methods=['GET'])
-def get_db_info():
-    """Get information about what's in the database"""
-    try:
-        collections_info = {
-            'database': 'FoodAtliss',
-            'collections': {
-                'restaurants': {
-                    'count': restaurants_collection.count_documents({}),
-                    'sample': list(restaurants_collection.find().limit(3))
-                },
-                'categories': {
-                    'count': categories_collection.count_documents({}),
-                    'sample': list(categories_collection.find().limit(3))
-                },
-                'reviews': {
-                    'count': reviews_collection.count_documents({}),
-                    'sample': list(reviews_collection.find().limit(3))
-                }
-            }
-        }
-        
-        # Serialize all documents
-        for collection_name in collections_info['collections']:
-            collections_info['collections'][collection_name]['sample'] = [
-                serialize_doc(doc) for doc in collections_info['collections'][collection_name]['sample']
-            ]
-        
-        return jsonify(collections_info), 200
-    
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 # ============ ERROR HANDLERS ============
-
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({'error': 'Endpoint not found'}), 404
@@ -337,19 +316,6 @@ def internal_error(error):
     return jsonify({'error': 'Internal server error'}), 500
 
 # ============ MAIN ============
-
 if __name__ == '__main__':
-    print(" Starting Food Atlas Server...")
-    print(" Database: FoodAtliss")
-    print(" Server running at: http://localhost:5000")
-    print("\n Available Endpoints:")
-    print("    Homepage: http://localhost:5000")
-    print("     Map Page: http://localhost:5000/map")
-    print("    Stats: http://localhost:5000/api/stats")
-    print("    DB Info: http://localhost:5000/api/db-info")
-    print("    Restaurants: http://localhost:5000/api/restaurants")
-    print("    Categories: http://localhost:5000/api/categories")
-    print("\n Note: All data is loaded from MongoDB database 'FoodAtliss'")
-    print("   Make sure your MongoDB has restaurants and categories data!")
-    
+    print("\n🌐 Server running at: http://localhost:5000\n")
     app.run(debug=True, host='0.0.0.0', port=5000)
