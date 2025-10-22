@@ -8,7 +8,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* ---------- EXISTING STYLE UNCHANGED ---------- */
     * {
       margin: 0;
       padding: 0;
@@ -44,33 +43,6 @@
       font-weight: 700;
       color: #ffa500;
     }
-    .search-container {
-      display: flex;
-      background: rgba(255, 165, 0, 0.15);
-      border-radius: 30px;
-      padding: 8px 16px;
-      width: 300px;
-      border: 1px solid rgba(255, 165, 0, 0.3);
-    }
-    .search-container input {
-      background: transparent;
-      border: none;
-      color: white;
-      padding: 5px 10px;
-      flex: 1;
-      outline: none;
-      font-family: 'Poppins', sans-serif;
-    }
-    .search-container input::placeholder {
-      color: rgba(255, 255, 255, 0.5);
-    }
-    .search-container button {
-      background: transparent;
-      border: none;
-      color: #ffa500;
-      cursor: pointer;
-      font-size: 1.1rem;
-    }
     .tabs {
       display: flex;
       justify-content: center;
@@ -103,38 +75,217 @@
     .section { display: none; padding: 40px 30px; flex: 1; }
     .section.active { display: block; }
     .hero-section {
-      background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1350&q=80');
+      background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                      url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1350&q=80');
       background-size: cover;
       background-position: center;
       color: white;
       padding: 100px 20px;
       margin: -40px -30px 40px -30px;
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      align-items: center;
+    }
+    .hero-section h2 {
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+      color: #ffffff;
+    }
+    .hero-section p {
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto 25px auto;
+      line-height: 1.6;
+      color: #e0e0e0;
     }
     .hero-button {
       background: #ffa500;
       color: white;
-      padding: 12px 30px;
+      padding: 15px 35px;
       border-radius: 30px;
       text-decoration: none;
       font-weight: 600;
       transition: all 0.3s;
       box-shadow: 0 4px 8px rgba(255, 165, 0, 0.3);
+      display: inline-block;
+      margin-top: 10px;
     }
-    .hero-button:hover { background: #ff8c00; transform: translateY(-3px); }
+    .hero-button:hover {
+      background: #ff8c00;
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(255, 165, 0, 0.4);
+    }
     .section-title { text-align: center; font-size: 2rem; color: #e0e0e0; margin-top: 20px; }
     .section-title:after { content: ''; display: block; width: 60px; height: 3px; background: #ffa500; margin: 15px auto; }
     .categories { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; margin-top: 30px; }
     .category-card { width: 250px; height: 180px; background: #2a2a2a; border-radius: 15px; overflow: hidden; position: relative; cursor: pointer; transition: all 0.3s; }
     .category-card img { width: 100%; height: 100%; object-fit: cover; }
     .overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; background: linear-gradient(transparent, rgba(0, 0, 0, 0.7)); color: #fff; }
-    .featured-section { margin-top: 60px; background: #2a2a2a; padding: 40px; border-radius: 15px; }
-    .featured-restaurants { display: flex; overflow-x: auto; gap: 25px; padding: 10px; }
-    .restaurant-card { min-width: 300px; background: #333; border-radius: 12px; overflow: hidden; transition: all 0.3s; }
+    .featured-section {
+      margin-top: 40px;
+      background: #2a2a2a;
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+    }
+    .featured-restaurants {
+      display: flex;
+      overflow-x: auto;
+      gap: 20px;
+      padding: 10px 5px;
+      margin-bottom: 10px;
+    }
+    .featured-restaurants::-webkit-scrollbar {
+        height: 8px;
+        background: #1a1a1a;
+    }
+    .featured-restaurants::-webkit-scrollbar-thumb {
+        background: #ffa500;
+        border-radius: 10px;
+    }
+    .featured-restaurants::-webkit-scrollbar-thumb:hover {
+        background: #ff8c00;
+    }
+    .featured-restaurants::-webkit-scrollbar-track {
+        background: #2a2a2a;
+        border-radius: 10px;
+    }
+    .featured-restaurants {
+        scrollbar-width: thin;
+        scrollbar-color: #ffa500 #2a2a2a;
+    }
+    .restaurant-card {
+        min-width: 280px;
+        max-width: 280px;
+        background: #333;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s;
+    }
     .restaurant-card:hover { transform: translateY(-5px); }
-    .restaurant-image img { width: 100%; height: 180px; object-fit: cover; }
-    .restaurant-info { padding: 15px; }
-    .restaurant-name { font-size: 1.2rem; font-weight: 600; color: #fff; }
+    .restaurant-image img {
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+    }
+    .restaurant-info {
+        padding: 8px;
+    }
+    .restaurant-name {
+        font-size: 1rem;
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .restaurant-cuisine {
+        font-size: 0.9rem;
+        color: #b0b0b0;
+        margin-bottom: 4px;
+    }
+    .restaurant-location {
+        font-size: 0.85rem;
+        color: #888;
+    }
+    .restaurant-rating {
+        margin: 4px 0;
+        font-size: 0.9rem;
+    }
+    .section-title {
+        font-size: 1.8rem;
+        margin: 10px 0;
+    }
+
+    /* Search Popup Styles */
+    .search-popup {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .search-popup.active {
+      display: flex;
+    }
+    .search-popup-content {
+      background: #2a2a2a;
+      padding: 40px;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 500px;
+      position: relative;
+    }
+    .search-popup-close {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: transparent;
+      border: none;
+      color: #ffa500;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .search-popup h3 {
+      color: #ffa500;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .search-popup-input {
+      width: 100%;
+      background: #1a1a1a;
+      border: 2px solid #ffa500;
+      border-radius: 30px;
+      padding: 15px 20px;
+      color: white;
+      font-family: 'Poppins', sans-serif;
+      font-size: 1rem;
+      outline: none;
+    }
+    .search-popup-input::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+    .search-popup-button {
+      width: 100%;
+      background: #ffa500;
+      border: none;
+      border-radius: 30px;
+      padding: 15px;
+      color: white;
+      font-family: 'Poppins', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: all 0.3s;
+    }
+    .search-popup-button:hover {
+      background: #ff8c00;
+    }
+
+    @media (max-width: 768px) {
+      .hero-section h2 {
+        font-size: 2rem;
+      }
+      .hero-section p {
+        font-size: 1rem;
+        padding: 0 15px;
+      }
+    }
+    @media (max-width: 480px) {
+      .hero-section h2 {
+        font-size: 1.5rem;
+      }
+      .hero-section {
+        padding: 60px 15px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -143,10 +294,6 @@
   <div class="logo-container">
     <img src="https://cdn-icons-png.flaticon.com/512/684/684908.png" alt="Food Atlas Logo">
     <h1>Food Atlas</h1>
-  </div>
-  <div class="search-container">
-    <input id="searchInput" type="text" placeholder="Search for restaurants, cuisines...">
-    <button id="searchBtn"><i class="fas fa-search"></i></button>
   </div>
 </header>
 
@@ -162,6 +309,16 @@
     <h2>Discover Amazing Food Near You</h2>
     <p>Explore thousands of restaurants, cafes, and food experiences across your city with Food Atlas</p>
     <a href="#" id="findBtn" class="hero-button">Find Restaurants</a>
+  </div>
+
+  <!-- Search Popup -->
+  <div id="searchPopup" class="search-popup">
+    <div class="search-popup-content">
+      <button class="search-popup-close" onclick="closeSearchPopup()"><i class="fas fa-times"></i></button>
+      <h3>Search Restaurants</h3>
+      <input id="searchInput" type="text" class="search-popup-input" placeholder="Search for restaurants, cuisines, locations...">
+      <button id="searchBtn" class="search-popup-button">Search</button>
+    </div>
   </div>
 
   <h2 class="section-title">Browse Categories</h2>
@@ -206,18 +363,44 @@
   <iframe src="/addspotpage" style="width: 100%; height: 1200px; border: none; border-radius: 15px;"></iframe>
 </div>
 
-<!-- FOOTER -->
 <footer>
   <p>&copy; 2025 Food Atlas. All rights reserved.</p>
 </footer>
 
 <script>
-  // Load restaurants
   let allRestaurants = [];
+  
   async function loadFeaturedRestaurants() {
-    const res = await fetch('/api/restaurants');
-    allRestaurants = await res.json();
-    displayRestaurants(allRestaurants);
+    try {
+        const response = await fetch('/api/restaurants');
+        const restaurants = await response.json();
+        allRestaurants = restaurants;
+        const container = document.getElementById('featuredRestaurants');
+        container.innerHTML = '';
+        restaurants.slice(0, 6).forEach(r => {
+            const card = document.createElement('div');
+            card.className = 'restaurant-card';
+            card.innerHTML = `
+                <div class="restaurant-image">
+                    <img src="${r.image || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1350&q=80'}" alt="${r.name}">
+                </div>
+                <div class="restaurant-info">
+                    <div class="restaurant-name">${r.name}</div>
+                    <div class="restaurant-rating">
+                        <div class="stars">${'★'.repeat(Math.round(r.rating || 4))}${'☆'.repeat(5 - Math.round(r.rating || 4))}</div>
+                        <div>${(r.rating || 4).toFixed(1)}</div>
+                    </div>
+                    <div class="restaurant-cuisine">${r.cuisine || 'Various'}</div>
+                    <div class="restaurant-location">
+                        <i class="fas fa-map-marker-alt"></i> ${r.address || 'Location unavailable'}
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    } catch (error) {
+        console.error('Error loading restaurants:', error);
+    }
   }
 
   function displayRestaurants(list) {
@@ -236,7 +419,6 @@
     });
   }
 
-  // Category filter
   document.querySelectorAll('.category-card').forEach(card => {
     card.addEventListener('click', () => {
       const cat = card.dataset.category;
@@ -245,21 +427,61 @@
     });
   });
 
-  // Search function
   const searchBtn = document.getElementById('searchBtn');
   const searchInput = document.getElementById('searchInput');
   const findBtn = document.getElementById('findBtn');
+  const searchPopup = document.getElementById('searchPopup');
+  
+  findBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    searchPopup.classList.add('active');
+    searchInput.focus();
+  });
+
+  function closeSearchPopup() {
+    searchPopup.classList.remove('active');
+    searchInput.value = '';
+  }
+
+  searchPopup.addEventListener('click', (e) => {
+    if (e.target === searchPopup) {
+      closeSearchPopup();
+    }
+  });
   
   function performSearch() {
     const q = searchInput.value.trim().toLowerCase();
     const filtered = allRestaurants.filter(r => 
-      r.name.toLowerCase().includes(q) || (r.cuisine && r.cuisine.toLowerCase().includes(q))
+      r.name.toLowerCase().includes(q) || 
+      (r.cuisine && r.cuisine.toLowerCase().includes(q)) ||
+      (r.address && r.address.toLowerCase().includes(q))
     );
-    displayRestaurants(filtered);
+    
+    const container = document.getElementById('featuredRestaurants');
+    
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div class="no-results">
+                <p>No restaurants found matching "${searchInput.value}"</p>
+            </div>`;
+    } else {
+        displayRestaurants(filtered);
+    }
+    closeSearchPopup();
+    
+    // Scroll to Featured Restaurants section
+    document.querySelector('.featured-section').scrollIntoView({ 
+      behavior: 'smooth', 
+      block: 'start' 
+    });
   }
 
   searchBtn.addEventListener('click', performSearch);
-  findBtn.addEventListener('click', performSearch);
+  searchInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        performSearch();
+    }
+  });
 
   document.addEventListener('DOMContentLoaded', loadFeaturedRestaurants);
 
