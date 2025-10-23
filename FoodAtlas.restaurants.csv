@@ -1,14 +1,27 @@
-_id,name,lat,lng,description,cuisine,category,rating,review_count,hours,address,phone,price_range,image,created_at,updated_at
-68e6423485b92971bb1e23f1,Woxsen Bistro,17.7033,78.049,A cozy bistro with a variety of dishes. Perfect for students and faculty.,"Multi-cuisine, Bakery, Cafe",Multi-cuisine,4.2,156,8:00 AM - 10:00 PM,"Woxsen University Campus, Sangareddy",+91 9876543210,₹₹,https://images.unsplash.com/photo-1555396273-367ea4eb4db5,2025-10-08T10:51:32.248Z,
-68e6423485b92971bb1e23f2,Sangareddy Spice,17.7015,78.0475,Serving delicious Indian flavors with authentic Hyderabadi biryani.,"Indian, Hyderabadi, Biryani",Biryani,4.7,342,11:00 AM - 11:00 PM,"Market Road, Sangareddy",+91 9876543211,₹₹₹,https://images.unsplash.com/photo-1414235077428-338989a2e8c0,2025-10-08T10:51:32.248Z,
-68e6423485b92971bb1e23f3,The Green Plate,17.705,78.05,A vegetarian-friendly cafe with organic and healthy options.,"Vegetarian, Organic, Healthy",Vegetarian,4.3,89,9:00 AM - 9:00 PM,"College Road, Sangareddy",+91 9876543212,₹₹,https://images.unsplash.com/photo-1516685018646-549198525c1b,2025-10-08T10:51:32.248Z,
-68e6423485b92971bb1e23f4,BBQ Corner,17.7,78.046,Barbecue and grilled food with Chinese fusion.,"Barbecue, Grill, Chinese",Barbecue,4.4,203,12:00 PM - 10:00 PM,"Highway Junction, Sangareddy",+91 9876543213,₹₹,https://images.unsplash.com/photo-1432139509613-5c4255815697,2025-10-08T10:51:32.248Z,
-68e6423485b92971bb1e23f5,Café Wox,17.706,78.051,A coffee shop with a beautiful ambiance. Perfect for study sessions.,"Cafe, Coffee, Desserts",Cafe,4.8,278,7:00 AM - 9:00 PM,"Woxsen Campus, Sangareddy",+91 9876543214,₹₹,https://images.unsplash.com/photo-1511920170033-f8396924c348,2025-10-08T10:51:32.249Z,
-68e6423485b92971bb1e23f6,Paradise Biryani,17.4399,78.4744,Famous for authentic Hyderabadi biryani since 1953.,"Biryani, Hyderabadi",Biryani,4.6,5432,11:00 AM - 11:00 PM,"Shop 1, RTC Cross Roads, Hyderabad",+91 9876543215,₹₹₹,https://images.unsplash.com/photo-1563245372-f21724e3856d,2025-10-08T10:51:32.249Z,
-68e6423485b92971bb1e23f7,Bawarchi,17.4146,78.4747,Legendary biryani spot in the heart of Hyderabad.,"Biryani, North Indian",Biryani,4.1,3210,11:30 AM - 11:30 PM,"Hill Fort Rd, RTC Cross Roads, Hyderabad",+91 9876543216,₹₹,https://images.unsplash.com/photo-1563245372-f21724e3856d,2025-10-08T10:51:32.250Z,
-68e6423485b92971bb1e23f8,Chutneys,17.4297,78.4867,Wide variety of South Indian breakfast and snacks.,South Indian,South Indian,4.3,1876,7:00 AM - 10:00 PM,"Road No 10, Banjara Hills, Hyderabad",+91 9876543217,₹₹,https://images.unsplash.com/photo-1630383249896-424e482df921,2025-10-08T10:51:32.252Z,
-68e6423485b92971bb1e23f9,Ohri's Jiva,17.432,78.4833,Premium Mediterranean cuisine with live music.,"Mediterranean, Continental",Mediterranean,4.2,987,12:00 PM - 11:00 PM,"Road No. 12, Banjara Hills, Hyderabad",+91 9876543218,₹₹₹₹,https://images.unsplash.com/photo-1544148103-0773bf10d330,2025-10-08T10:51:32.254Z,
-68e6423485b92971bb1e23fa,Kebab Studio,17.426,78.4807,Authentic barbecue and kebabs with great ambiance.,"Barbecue, Kebabs",Barbecue,4.5,1543,6:00 PM - 11:30 PM,"Road No 36, Jubilee Hills, Hyderabad",+91 9876543219,₹₹₹,https://images.unsplash.com/photo-1529042410759-befb1204b468,2025-10-08T10:51:32.255Z,
-68e64407389d81698c7d8320,rise,0,0,A new spot added by a user.,fast food,,5,0,,woxssen,,,,2025-10-08T10:59:19.958Z,2025-10-08T10:59:19.958Z
-68e65d487586aa1f35966281,rise,17.64680136,77.7995126,,non-vegetarian,non-vegetarian,4.1,0,,"Woxsen University, Kamkole, Sadasivpet",,,,2025-10-08T12:47:04.563Z,2025-10-08T12:47:04.564Z
-68e660926aede12c4afc7bec,Cup of Joe,17.64634884,77.79912075,,other,other,4.1,0,,"Woxsen University, Kamkole, Sadasivpet",,,,2025-10-08T13:01:06.317Z,2025-10-08T13:01:06.317Z
+_id,name,lat,lng,description,cuisine,category,rating,review_count,hours,address,phone,price_range,image,created_at,updated_at,added_by,catergory
+68e6423485b92971bb1e23f1,Woxsen Bistro,17.7033,78.049,A cozy bistro with a variety of dishes. Perfect for students and faculty.,"Multi-cuisine, Bakery, Cafe",Multi-cuisine,4.2,156,8:00 AM - 10:00 PM,"Woxsen University Campus, Sangareddy",+91 9876543210,₹₹,https://images.unsplash.com/photo-1555396273-367ea4eb4db5,2025-10-08T10:51:32.248Z,,,
+68e6423485b92971bb1e23f2,Sangareddy Spice,17.7015,78.0475,Serving delicious Indian flavors with authentic Hyderabadi biryani.,"Indian, Hyderabadi, Biryani",Biryani,4.7,342,11:00 AM - 11:00 PM,"Market Road, Sangareddy",+91 9876543211,₹₹₹,https://images.unsplash.com/photo-1414235077428-338989a2e8c0,2025-10-08T10:51:32.248Z,,,
+68e6423485b92971bb1e23f3,The Green Plate,17.705,78.05,A vegetarian-friendly cafe with organic and healthy options.,"Vegetarian, Organic, Healthy",Vegetarian,4.3,89,9:00 AM - 9:00 PM,"College Road, Sangareddy",+91 9876543212,₹₹,https://images.unsplash.com/photo-1516685018646-549198525c1b,2025-10-08T10:51:32.248Z,,,
+68e6423485b92971bb1e23f4,BBQ Corner,17.7,78.046,Barbecue and grilled food with Chinese fusion.,"Barbecue, Grill, Chinese",Barbecue,4.4,203,12:00 PM - 10:00 PM,"Highway Junction, Sangareddy",+91 9876543213,₹₹,https://images.unsplash.com/photo-1432139509613-5c4255815697,2025-10-08T10:51:32.248Z,,,
+68e6423485b92971bb1e23f5,Café Wox,17.706,78.051,A coffee shop with a beautiful ambiance. Perfect for study sessions.,"Cafe, Coffee, Desserts",Cafe,4.8,278,7:00 AM - 9:00 PM,"Woxsen Campus, Sangareddy",+91 9876543214,₹₹,https://images.unsplash.com/photo-1511920170033-f8396924c348,2025-10-08T10:51:32.249Z,,,
+68e6423485b92971bb1e23f6,Paradise Biryani,17.4399,78.4744,Famous for authentic Hyderabadi biryani since 1953.,"Biryani, Hyderabadi",Biryani,4.6,5432,11:00 AM - 11:00 PM,"Shop 1, RTC Cross Roads, Hyderabad",+91 9876543215,₹₹₹,https://images.unsplash.com/photo-1563245372-f21724e3856d,2025-10-08T10:51:32.249Z,,,
+68e6423485b92971bb1e23f8,Chutneys,17.4297,78.4867,Wide variety of South Indian breakfast and snacks.,South Indian,South Indian,4.3,1876,7:00 AM - 10:00 PM,"Road No 10, Banjara Hills, Hyderabad",+91 9876543217,₹₹,https://images.unsplash.com/photo-1630383249896-424e482df921,2025-10-08T10:51:32.252Z,,,
+68e6423485b92971bb1e23f9,Ohri's Jiva,17.432,78.4833,Premium Mediterranean cuisine with live music.,"Mediterranean, Continental",Mediterranean,4.2,987,12:00 PM - 11:00 PM,"Road No. 12, Banjara Hills, Hyderabad",+91 9876543218,₹₹₹₹,https://images.unsplash.com/photo-1544148103-0773bf10d330,2025-10-08T10:51:32.254Z,,,
+68e64407389d81698c7d8320,rise,0,0,A new spot added by a user.,fast food,,4,0,,woxssen,,,,2025-10-08T10:59:19.958Z,2025-10-08T10:59:19.958Z,,
+68e660926aede12c4afc7bec,Cup of Joe,17.64634884,77.79912075,,other,other,4.1,0,,"Woxsen University, Kamkole, Sadasivpet",,,,2025-10-08T13:01:06.317Z,2025-10-08T13:01:06.317Z,,
+68f9c39eb1f88d2f890ffcf1,dominos,17.40419263854163,78.48694911987204,pizza,italian,italian,4,0,,Himayatnagar,,,,2025-10-23T05:56:46.426Z,2025-10-23T05:56:46.427Z,68f8dbbe22598857cc9062d8,
+68f9c8b8d697de19be1edd6c,pizza hut,17.399498,78.48522231,,Italian,,3,,,,,,,,,,Italian
+68f9c8b8d697de19be1edd6d,mc donalds,17.40157108,78.48671804,,Fast Food,,4,,,,,,,,,,Fast Food
+68f9c8b8d697de19be1edd6e,The Nosh Bistro,17.40273893,78.48532868,,Indian,,2,,,,,,,,,,Indian
+68f9c8b8d697de19be1edd6f,Bahar Café,17.40101898,78.47871972,,Indian,,3,,,,,,,,,,Indian
+68f9c8b8d697de19be1edd70,Haiking café,17.39860284,78.48412705,,Chinese,,4,,,,,,,,,,Chinese
+68f9c8b8d697de19be1edd71,Minerva ,17.40204276,78.48550034,,Indian,,5,,,,,,,,,,Indian
+68f9c8b8d697de19be1edd72,Makobrew,17.39970853,78.48112297,,Italian,,5,,,,,,,,,,Italian
+68f9c8b8d697de19be1edd73,Mirosa,17.40089613,78.48541451,,Italian,,5,,,,,,,,,,Italian
+68f9c8b8d697de19be1edd74,Leons,17.4000771,78.4862299,,Fast Food,,3,,,,,,,,,,Fast Food
+68f9cb64d697de19be1edd81,Kshetra,17.41638747,78.45624704,,Indian,,3,,,,,,,,,,Indian
+68f9cb64d697de19be1edd82,Astoria,17.40579034,78.46792747,,Chinese,,4,,,,,,,,,,Chinese
+68f9cb64d697de19be1edd83,By the bay,17.42228337,78.4655185,,Indian,,2,,,,,,,,,,Indian
+68f9cb64d697de19be1edd84,Signature Grills,17.43490341,78.47396654,,Chinese,,3,,,,,,,,,,Chinese
+68f9cb64d697de19be1edd85,Suraj,17.41538007,78.49079076,,Fast Food,,4,,,,,,,,,,Fast Food
+68f9cb64d697de19be1edd86,Imperial,17.4005664,78.46277206,,Italian,,5,,,,,,,,,,Italian
