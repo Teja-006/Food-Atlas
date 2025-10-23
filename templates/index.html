@@ -377,7 +377,7 @@
         allRestaurants = restaurants;
         const container = document.getElementById('featuredRestaurants');
         container.innerHTML = '';
-        restaurants.slice(0, 6).forEach(r => {
+        restaurants.slice(6, 12).forEach(r => {
             const card = document.createElement('div');
             card.className = 'restaurant-card';
             card.innerHTML = `
