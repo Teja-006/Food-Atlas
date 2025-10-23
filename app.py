@@ -15,7 +15,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-pr
 MONGO_URI = 'mongodb://localhost:27017/'
 client = MongoClient(MONGO_URI)
 db = client['FoodAtlas']
-print("✅ Connected to MongoDB at", MONGO_URI)
+print(" Connected to MongoDB at", MONGO_URI)
 
 # Collections
 restaurants_collection = db['restaurants']
@@ -317,5 +317,5 @@ def internal_error(error):
 
 # ============ MAIN ============
 if __name__ == '__main__':
-    print("\n🌐 Server running at: http://localhost:5000\n")
+    print("\n Server running at: http://localhost:5000\n")
     app.run(debug=True, host='0.0.0.0', port=5000)
