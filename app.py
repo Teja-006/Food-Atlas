@@ -307,7 +307,7 @@ def get_stats():
         return jsonify({'error': str(e)}), 500
 
 # ============ ERROR HANDLERS ============
-@app.errorhandler(404)
+@app.errorhandler(404)  
 def not_found(error):
     return jsonify({'error': 'Endpoint not found'}), 404
 
