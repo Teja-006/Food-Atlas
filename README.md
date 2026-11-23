@@ -1,204 +1,109 @@
 # Food Atlas
 
-Food Atlas is a web application for discovering and managing restaurant
-information. It uses a Flask backend and MongoDB database, with
-Flask-rendered pages for login, the homepage, the restaurant map, and
-adding a restaurant spot.
+Discover, map and add restaurants.
 
-## Features
+| Part | Tech | Runs on |
+|---|---|---|
+| Frontend | React (Vite), Leaflet + OpenStreetMap | Any static host |
+| Backend | Python, FastAPI | Any Python host |
+| Database | MongoDB Atlas | Atlas cloud (free M0 tier) |
+| Sign-in | Firebase Authentication (Spark plan) | Google's servers |
 
--   User registration, login, logout, and session-status checking.
--   Browse restaurant records stored in MongoDB.
--   Filter restaurants by category, cuisine, and location.
--   Search restaurant names, cuisines, descriptions, addresses, and
-    categories.
--   Create, retrieve, update, and delete restaurant records through API
-    endpoints.
--   View database statistics, including restaurant count, user count,
-    average rating, and top-rated restaurants.
-
-## Tech Stack
-
--   Python
--   Flask
--   MongoDB and PyMongo
--   Flask-CORS
--   HTML templates rendered by Flask
-
-## Repository Structure
-
-``` text
-Food-Atlas/
-├── templates/                 # HTML pages rendered by Flask
-├── FoodAtlas.restaurants.csv  # Restaurant dataset
-├── app.py                     # Flask application and API routes
-└── requirements.txt           # Python dependencies
+```
+food-atlas/
+├── backend/      FastAPI app (app/), seed.py, requirements.txt, .env.example
+├── frontend/     React + Vite
+└── data/restaurants.csv   Seed data (cleaned on import)
 ```
 
-## Getting Started
+Nothing here needs your own computer once deployed: the database and sign-in are hosted services, and the frontend and backend deploy to any host (see the end).
 
-### 1. Clone the repository
+## 1. MongoDB Atlas (database)
 
-``` bash
-git clone https://github.com/Teja-006/Food-Atlas.git
-cd Food-Atlas
-```
+1. Create a free **M0** cluster at https://cloud.mongodb.com.
+2. **Database Access**: add a database user with a strong password.
+3. **Network Access**: add your IP for local work. (Deployed hosts need more, see "Deploying".)
+4. **Connect → Drivers**: copy the `mongodb+srv://...` string into `backend/.env` as `MONGO_URI`.
 
-### 2. Create and activate a virtual environment
+MongoDB Compass is optional. It is just a desktop viewer: connect it with the same string to browse and edit your Atlas data.
 
-**Windows PowerShell:**
+## 2. Firebase (sign-in)
 
-``` powershell
+1. Go to https://console.firebase.google.com and **Add project**. Stay on the free **Spark** plan (no card needed).
+2. **Build → Authentication → Get started → Sign-in method**: enable **Email/Password** and **Google**. Do not enable Phone (SMS is not free).
+3. **Project settings → General → Your apps → Web (`</>`)**: register an app and copy `apiKey`, `authDomain`, `projectId`, `appId` into `frontend/.env` (the `VITE_FIREBASE_*` lines).
+4. Put the same project ID in `backend/.env` as `FIREBASE_PROJECT_ID`.
+
+The backend needs no secret key file: it checks Firebase's signed tokens against your project ID. New email sign-ups must verify their email (Firebase sends the link) before they can add or edit restaurants. Google sign-ins are verified automatically.
+
+Email/password and Google sign-in are free up to 50,000 monthly active users.
+
+## 3. Backend (Python 3.10+)
+
+```bash
+cd backend
 python -m venv .venv
-.venv\\Scripts\\Activate.ps1
-```
-
-**macOS / Linux:**
-
-``` bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-### 3. Install dependencies
-
-``` bash
+source .venv/bin/activate          # Windows: .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+cp .env.example .env               # fill in MONGO_URI and FIREBASE_PROJECT_ID
+python seed.py --reset             # load restaurants into Atlas
+uvicorn app.main:app --reload --port 8000
 ```
 
-### 4. Start MongoDB
+API docs: http://localhost:8000/docs
 
-The current application connects to MongoDB at:
+Put your email in `ADMIN_EMAILS` to edit or delete any restaurant (seeded ones have no owner). It only counts if that email is verified in Firebase.
 
-``` text
-mongodb://localhost:27017/
+## 4. Maps (OpenStreetMap, no key or billing)
+
+The maps use Leaflet with OpenStreetMap tiles. There is nothing to sign up for or configure.
+
+OpenStreetMap's public tile server is a donated service with a [tile usage policy](https://operations.osmfoundation.org/policies/tiles/): keep the attribution (already included), and it is meant for light use, not heavy production traffic. If the app grows, switch to a hosted tile provider that has a free tier by changing `TILE_URL` and `TILE_ATTRIBUTION` in `frontend/src/lib/mapkit.js`. Nothing else needs to change.
+
+The "Near me" filter runs in MongoDB, and "Get directions" is a plain link to Google Maps, which needs no key.
+
+## 5. Frontend (Node 18+)
+
+```bash
+cd frontend
+cp .env.example .env     # add the Firebase values
+npm install
+npm run dev
 ```
 
-Make sure MongoDB is installed and running locally. The application uses
-the `FoodAtlas` database and the `restaurants` and `users` collections.
+Open http://localhost:5173. In development Vite proxies `/api` to port 8000.
 
-**Using MongoDB Atlas or another MongoDB instance:** Update the
-`MONGO_URI` value in `app.py` with your connection string. The current
-code defines this value directly in the application.
+## API
 
-### 5. Set the Flask secret key
+Send the Firebase ID token as `Authorization: Bearer <token>` (the frontend does this for you).
 
-The application reads `SECRET_KEY` from the environment and has a
-development fallback. Set a unique secret key before running outside a
-local development environment.
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/auth/me` | Profile for the signed-in user, or `{user: null}` |
+| GET | `/api/restaurants` | `q, category, cuisine, min_rating, lat, lng, radius_km, limit, skip` |
+| GET | `/api/restaurants/categories` | Names with counts |
+| GET | `/api/restaurants/{id}` | |
+| POST | `/api/restaurants` | Signed in, email verified |
+| PUT / DELETE | `/api/restaurants/{id}` | Owner or admin only |
+| GET | `/api/stats` | Totals, average rating, top 5 |
 
-**Windows PowerShell:**
+## Deploying (no local server needed)
 
-``` powershell
-$env:SECRET_KEY = "replace-with-a-long-random-secret"
-```
+Free-tier terms on hosting platforms change, so check each one's current limits.
 
-**macOS / Linux:**
+1. **Backend** on a Python host (Render, Railway, Fly.io and similar). Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`. Root directory: `backend`. Set these environment variables: `MONGO_URI`, `MONGO_DB`, `FIREBASE_PROJECT_ID`, `CORS_ORIGINS` (your frontend URL, no trailing slash), `ADMIN_EMAILS`.
+2. **Atlas network access:** most hosts use changing IP addresses, so add `0.0.0.0/0` under Network Access. This is only safe with a long random database password, which you should use.
+3. **Frontend** on a static host (Vercel, Netlify, Firebase Hosting). Build command `npm run build`, output folder `dist`. Set the same `VITE_*` variables from `frontend/.env`, with `VITE_API_URL` pointing to your deployed backend. Add a rewrite of all paths to `/index.html` so refreshing `/map` works.
+4. **Firebase:** Authentication → Settings → **Authorized domains**: add your frontend domain, or Google sign-in will fail.
+5. Run `python seed.py` once against Atlas (from your own machine is fine) to load the data.
 
-``` bash
-export SECRET_KEY="replace-with-a-long-random-secret"
-```
+## Data cleanup done by `seed.py`
 
-### 6. Run the application
+- Merges the misspelled `catergory` column into `category`, and title-cases lowercase values.
+- Skips rows without a name or with `0,0` coordinates (the restaurant "rise" in the sample data; fix its coordinates in the CSV and re-run).
+- Stores coordinates as GeoJSON with a 2dsphere index, which powers the "Near me" filter (done in MongoDB, so it costs no Google requests).
+- Combines `image` and `Images` into one `images` list.
 
-``` bash
-python app.py
-```
+## Ideas for next steps
 
-Open:
-
-``` text
-http://localhost:5000
-```
-
-## Application Pages
-
-  Route            Purpose
-  ---------------- ----------------------------
-  `/`              Login page
-  `/homepage`      Main homepage
-  `/mappage`       Restaurant map page
-  `/addspotpage`   Add a restaurant spot page
-
-## API Endpoints
-
-### Authentication
-
-  Method   Endpoint        Description
-  -------- --------------- ---------------------------------------
-  `POST`   `/register`     Register a user
-  `POST`   `/login`        Log in a user
-  `POST`   `/logout`       Clear the current session
-  `GET`    `/check-auth`   Check whether a user is authenticated
-
-### Restaurants
-
-  ------------------------------------------------------------------------------------
-  Method                  Endpoint                             Description
-  ----------------------- ------------------------------------ -----------------------
-  `GET`                   `/api/restaurants`                   Retrieve restaurants
-                                                               with optional filters
-
-  `GET`                   `/api/restaurants/<restaurant_id>`   Retrieve one restaurant
-                                                               by ID
-
-  `POST`                  `/api/restaurants`                   Add a restaurant
-
-  `PUT`                   `/api/restaurants/<restaurant_id>`   Update a restaurant
-
-  `DELETE`                `/api/restaurants/<restaurant_id>`   Delete a restaurant
-
-  `GET`                   `/api/search?q=<query>`              Search restaurant
-                                                               records
-
-  `GET`                   `/api/stats`                         Retrieve restaurant and
-                                                               user statistics
-  ------------------------------------------------------------------------------------
-
-The `/api/restaurants` endpoint supports these optional query
-parameters:
-
--   `category`
--   `cuisine`
--   `location`
--   `search`
--   `limit`
-
-Example:
-
-``` text
-http://localhost:5000/api/restaurants?cuisine=Indian&limit=10
-```
-
-## Restaurant Dataset
-
-The repository includes `FoodAtlas.restaurants.csv`. The Flask startup
-code connects to MongoDB; it does not automatically import the CSV.
-Import the dataset into the `restaurants` collection if you want those
-records available to the application. Check that the CSV columns and
-data types match the fields used by the application.
-
-## Security Notes
-
-Before deploying this project publicly, address these development-stage
-security concerns:
-
--   The current registration and login implementation stores and
-    compares passwords as plain text. Use a password-hashing solution
-    such as Werkzeug's password utilities or Argon2.
--   Set a strong, unique `SECRET_KEY`; do not rely on the development
-    fallback.
--   Keep database credentials and other secrets out of source control.
--   Review authentication and authorization for restaurant update and
-    delete operations.
--   Disable Flask debug mode in production.
-
-## Contributing
-
-Suggestions and contributions are welcome. Fork the repository, create a
-feature branch, make your changes, and open a pull request.
-
-## License
-
-No license file is currently specified in this repository. All rights
-are reserved unless the repository owner adds a license.
+Per-user reviews that compute ratings, favorites, image upload, rate limiting, automated tests.
