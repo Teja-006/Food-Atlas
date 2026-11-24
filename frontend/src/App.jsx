@@ -1,35 +1,78 @@
-import { Link, Route, Routes } from "react-router-dom";
-import Navbar from "./components/Navbar.jsx";
-import VerifyBanner from "./components/VerifyBanner.jsx";
-import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import Home from "./pages/Home.jsx";
-import MapPage from "./pages/MapPage.jsx";
-import RestaurantDetail from "./pages/RestaurantDetail.jsx";
-import { AddSpot, EditSpot } from "./pages/Spot.jsx";
-import Auth from "./pages/Auth.jsx";
+import { useEffect } from "react";
+import {
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 
-const NotFound = () => (
-  <main className="wrap pad">
-    <h1>Page not found</h1>
-    <p><Link to="/">Back to Explore</Link></p>
-  </main>
-);
+import { Navbar, Footer } from "./components/ui";
+
+import Home from "./pages/Home";
+import Explore from "./pages/Explore";
+import Restaurant from "./pages/Restaurant";
+import About from "./pages/About";
+import Profile from "./pages/Profile";
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "instant",
+    });
+  }, [pathname]);
+
+  return null;
+}
 
 export default function App() {
   return (
     <>
+      <ScrollToTop />
+
       <Navbar />
-      <VerifyBanner />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/map" element={<MapPage />} />
-        <Route path="/restaurants/:id" element={<RestaurantDetail />} />
-        <Route path="/add" element={<ProtectedRoute><AddSpot /></ProtectedRoute>} />
-        <Route path="/restaurants/:id/edit" element={<ProtectedRoute><EditSpot /></ProtectedRoute>} />
-        <Route path="/login" element={<Auth mode="login" />} />
-        <Route path="/register" element={<Auth mode="register" />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+
+      <main>
+        <Routes>
+          {/* Homepage */}
+          <Route path="/" element={<Home />} />
+
+          {/* Restaurant exploration */}
+          <Route path="/explore" element={<Explore />} />
+
+          {/* Restaurant details - support both URL formats */}
+          <Route
+            path="/restaurants/:id"
+            element={<Restaurant />}
+          />
+
+          <Route
+            path="/restaurant/:id"
+            element={<Restaurant />}
+          />
+
+          {/* Other pages */}
+          <Route path="/about" element={<About />} />
+          <Route path="/profile" element={<Profile />} />
+
+          {/* Redirect categories to Explore */}
+          <Route
+            path="/categories"
+            element={<Navigate to="/explore" replace />}
+          />
+
+          {/* Unknown routes */}
+          <Route
+            path="*"
+            element={<Navigate to="/" replace />}
+          />
+        </Routes>
+      </main>
+
+      <Footer />
     </>
   );
 }

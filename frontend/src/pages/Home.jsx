@@ -1,110 +1,70 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { api } from "../api";
-import RestaurantCard from "../components/RestaurantCard.jsx";
+import { Link, useNavigate } from "react-router-dom";
+import { api } from "../lib/api";
+import { Grid, LoadingGrid, Notice } from "../components/ui";
+
+const CATEGORIES = [
+  ["Biryani & Indian", "Indian"], ["Cafes & coffee", "Cafe"], ["Chinese", "Chinese"],
+  ["Desserts", "Dessert"], ["Street food", "Street Food"], ["Fast food", "Fast Food"],
+];
 
 export default function Home() {
-  const [params, setParams] = useSearchParams();
-  const category = params.get("category") || "All";
-  const urlQ = params.get("q") || "";
-  const minRating = params.get("min_rating") || "";
-
-  const [text, setText] = useState(urlQ);
-  const [cats, setCats] = useState([]);
+  const navigate = useNavigate();
+  const [q, setQ] = useState("");
+  const [restaurants, setRestaurants] = useState([]);
   const [stats, setStats] = useState(null);
-  const [data, setData] = useState({ items: [], total: 0 });
-  const [status, setStatus] = useState("loading");
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const update = (patch) => {
-    const next = new URLSearchParams(params);
-    Object.entries(patch).forEach(([k, v]) => (v ? next.set(k, v) : next.delete(k)));
-    setParams(next, { replace: true });
-  };
-
   useEffect(() => {
-    api.categories().then(setCats).catch(() => {});
-    api.stats().then(setStats).catch(() => {});
+    let active = true;
+    Promise.all([api.restaurants({ limit: 12 }), api.stats()])
+      .then(([data, s]) => { if (active) { setRestaurants(data.items); setStats(s); } })
+      .catch((e) => { if (active) setError(`${e.message}. Check that your FastAPI backend is running.`); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, []);
 
-  // Debounce typing into the URL.
-  useEffect(() => {
-    const t = setTimeout(() => text !== urlQ && update({ q: text }), 300);
-    return () => clearTimeout(t);
-  }, [text]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    let live = true;
-    setStatus("loading");
-    api
-      .listRestaurants({
-        q: urlQ,
-        category: category === "All" ? "" : category,
-        min_rating: minRating,
-        limit: 60,
-      })
-      .then((d) => live && (setData(d), setStatus("ready")))
-      .catch((e) => live && (setError(e.message), setStatus("error")));
-    return () => { live = false; };
-  }, [urlQ, category, minRating]);
-
-  const totalAll = cats.reduce((n, c) => n + c.count, 0);
-
-  return (
-    <main className="wrap">
-      <section className="hero">
-        <h1>Every plate, on the map.</h1>
-        <p className="lead">
-          Restaurants around Sangareddy and Hyderabad, rated and pinned. Search by dish,
-          cuisine or street.
-        </p>
-        <input
-          className="search"
-          type="search"
-          placeholder="Try biryani, cafe, Himayatnagar"
-          aria-label="Search restaurants"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-        />
-        {stats && (
-          <p className="muted small">
-            {stats.total_restaurants} spots, average rating {stats.avg_rating || "not yet set"}
-          </p>
-        )}
-      </section>
-
-      <section className="filters" aria-label="Filters">
-        <div className="chips">
-          {[{ name: "All", count: totalAll }, ...cats].map((c) => (
-            <button
-              key={c.name}
-              className="chip"
-              aria-pressed={category === c.name}
-              onClick={() => update({ category: c.name === "All" ? "" : c.name })}
-            >
-              {c.name} <span>{c.count}</span>
-            </button>
-          ))}
-        </div>
-        <label className="inline">
-          Minimum rating
-          <select value={minRating} onChange={(e) => update({ min_rating: e.target.value })}>
-            <option value="">Any</option>
-            <option value="3">3.0+</option>
-            <option value="4">4.0+</option>
-            <option value="4.5">4.5+</option>
-          </select>
-        </label>
-      </section>
-
-      {status === "error" && <p className="error" role="alert">{error}</p>}
-      {status === "loading" && <p className="muted">Loading...</p>}
-      {status === "ready" && data.items.length === 0 && (
-        <p className="empty">Nothing matches that search. Try a broader term or clear the filters.</p>
-      )}
-      <div className="grid">
-        {data.items.map((r) => <RestaurantCard key={r.id} r={r} />)}
+  const search = (e) => { e.preventDefault(); navigate(`/explore${q.trim() ? `?q=${encodeURIComponent(q.trim())}` : ""}`); };
+  return <div className="wrap">
+    <section className="hero">
+      <div className="hero-copy">
+        <div className="eyebrow"><span /> THE CITY, SERVED</div>
+        <h1>Good food.<br /><i>Great discoveries.</i></h1>
+        <p>Find your next favourite table, from neighbourhood classics to places you haven't heard of yet.</p>
+        <form className="search" onSubmit={search}>
+          <span className="search-icon">⌕</span>
+          <input aria-label="Search restaurants" placeholder="Search a restaurant, cuisine or area…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <button className="btn">Explore</button>
+        </form>
+        <div className="hero-note">Discover local favourites, one meal at a time.</div>
       </div>
-    </main>
-  );
+      <div className="hero-art">
+        <div className="hero-image hero-image-main"><div className="image-label">A little taste of Hyderabad</div></div>
+        <div className="hero-image hero-image-small"><span>Made for food lovers</span></div>
+        <div className="hero-stamp">FOOD<br />IS A<br /><b>JOURNEY</b></div>
+      </div>
+    </section>
+
+    <section className="stats-row">
+      <div><strong>{stats?.total_restaurants?.toLocaleString("en-IN") ?? "—"}</strong><span>Places to discover</span></div>
+      <div><strong>{stats?.total_users?.toLocaleString("en-IN") ?? "—"}</strong><span>Food explorers</span></div>
+      <div><strong>{stats?.avg_rating ? Number(stats.avg_rating).toFixed(1) : "—"}</strong><span>Community average</span></div>
+      <Link to="/explore" className="text-link">See all restaurants ↗</Link>
+    </section>
+
+    <section>
+      <div className="section-head"><div><div className="eyebrow">THE SHORTLIST</div><h2>Worth a closer look</h2></div><Link className="text-link" to="/explore">View all ↗</Link></div>
+      {error && <Notice>{error}</Notice>}
+      {loading ? <LoadingGrid /> : <Grid list={restaurants} />}
+      {!loading && !restaurants.length && !error && <Notice type="info">Your restaurant collection is empty. Import your restaurant data into MongoDB to get started.</Notice>}
+    </section>
+
+    <section className="category-section">
+      <div className="section-head"><div><div className="eyebrow">FOLLOW YOUR CRAVING</div><h2>Explore by taste</h2></div><Link className="text-link" to="/explore">All categories ↗</Link></div>
+      <div className="category-grid">{CATEGORIES.map(([label, value], i) => <Link key={value} to={`/explore?category=${encodeURIComponent(value)}`} className={`category-tile tile-${i}`}><span>0{i + 1}</span><b>{label}</b><em>Explore ↗</em></Link>)}</div>
+    </section>
+
+    <section className="closing-cta"><div><div className="eyebrow">YOUR TABLE IS WAITING</div><h2>Hungry for something new?</h2><p>Let the next great meal find you.</p></div><Link to="/explore" className="btn btn-light">Find your place ↗</Link></section>
+  </div>;
 }
