@@ -1,47 +1,89 @@
 import { auth } from "./lib/firebase";
 
-const BASE = import.meta.env.VITE_API_URL || "";
+const BASE = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
 
 function errorMessage(data, status) {
-  const d = data?.detail;
-  if (typeof d === "string") return d;
-  if (Array.isArray(d)) {
-    return d.map((e) => `${e.loc.slice(1).join(".")}: ${e.msg}`).join("; ");
+  const detail = data?.detail;
+
+  if (typeof detail === "string") return detail;
+
+  if (Array.isArray(detail)) {
+    return detail
+      .map((item) => `${item.loc?.slice(1).join(".")}: ${item.msg}`)
+      .join("; ");
   }
+
   return `Request failed (${status})`;
 }
 
 async function request(path, { method = "GET", body, params } = {}) {
-  let qs = "";
+  const query = new URLSearchParams();
+
   if (params) {
-    const clean = Object.entries(params).filter(([, v]) => v !== "" && v != null);
-    if (clean.length) qs = "?" + new URLSearchParams(clean);
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== "" && value != null) {
+        query.set(key, String(value));
+      }
+    });
   }
 
-  // Firebase returns a cached ID token and refreshes it automatically when it expires.
-  const token = await auth?.currentUser?.getIdToken();
-  const headers = {};
-  if (body) headers["Content-Type"] = "application/json";
-  if (token) headers.Authorization = `Bearer ${token}`;
+  const queryString = query.size ? `?${query.toString()}` : "";
 
-  const res = await fetch(`${BASE}/api${path}${qs}`, {
+  const token = await auth?.currentUser?.getIdToken();
+
+  const headers = {
+    Accept: "application/json",
+  };
+
+  if (body) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${BASE}/api${path}${queryString}`, {
     method,
     headers,
     body: body ? JSON.stringify(body) : undefined,
   });
-  if (res.status === 204) return null;
-  const data = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(errorMessage(data, res.status));
+
+  if (response.status === 204) return null;
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(errorMessage(data, response.status));
+  }
+
   return data;
 }
 
 export const api = {
   me: () => request("/auth/me"),
-  listRestaurants: (params) => request("/restaurants", { params }),
+
+  listRestaurants: (params = {}) =>
+    request("/restaurants", { params }),
+
   categories: () => request("/restaurants/categories"),
-  getRestaurant: (id) => request(`/restaurants/${id}`),
-  createRestaurant: (body) => request("/restaurants", { method: "POST", body }),
-  updateRestaurant: (id, body) => request(`/restaurants/${id}`, { method: "PUT", body }),
-  deleteRestaurant: (id) => request(`/restaurants/${id}`, { method: "DELETE" }),
+
+  getRestaurant: (id) =>
+    request(`/restaurants/${encodeURIComponent(id)}`),
+
+  createRestaurant: (body) =>
+    request("/restaurants", { method: "POST", body }),
+
+  updateRestaurant: (id, body) =>
+    request(`/restaurants/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      body,
+    }),
+
+  deleteRestaurant: (id) =>
+    request(`/restaurants/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    }),
+
   stats: () => request("/stats"),
 };

@@ -1,33 +1,65 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { CATS } from "../data/mock";
+import { useAuth } from "../auth.jsx";
 
-const KEY = "food-atlas-preferences";
-const DEFAULTS = { name: "", city: "Hyderabad", area: "", diet: "No preference", spice: "Medium", budget: "₹₹", cuisines: [] };
+function Field({ label, children }) { return <label className="fl">{label}{children}</label>; }
 
 export default function Profile() {
-  const [form, setForm] = useState(DEFAULTS);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const initial = {
+    name: user?.name || user?.display_name || "", email: user?.email || "", phone: "", dob: "", gender: "Prefer not to say",
+    city: "", area: "", bio: "", diet: "No preference", spice: "Medium", budget: "₹₹",
+    cuisines: [], n1: true, n2: false,
+  };
+  const [form, setForm] = useState(initial);
+  const [profile, setProfile] = useState(initial);
   const [saved, setSaved] = useState(false);
-  useEffect(() => {
-    try { setForm({ ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) || "{}") }); } catch {}
-  }, []);
-  const change = (key) => (e) => { setSaved(false); setForm((old) => ({ ...old, [key]: e.target.value })); };
-  const submit = (e) => { e.preventDefault(); localStorage.setItem(KEY, JSON.stringify(form)); setSaved(true); };
-  return <div className="wrap page-shell profile-shell">
-    <div className="page-intro"><div className="eyebrow">YOUR FOOD COMPASS</div><h1>Make it <i>your taste.</i></h1><p>Save your food preferences on this device to keep your discoveries close.</p></div>
-    <form className="profile-card" onSubmit={submit}>
-      <div className="profile-avatar">F</div>
-      <h2>Your preferences</h2>
-      <p className="muted-small">These preferences are stored locally in this browser. They are not linked to your account.</p>
-      <div className="profile-fields">
-        <label className="filter-field"><span>Display name</span><input value={form.name} onChange={change("name")} placeholder="What should we call you?" /></label>
-        <label className="filter-field"><span>City</span><input value={form.city} onChange={change("city")} /></label>
-        <label className="filter-field"><span>Neighbourhood</span><input value={form.area} onChange={change("area")} placeholder="e.g. Madhapur" /></label>
-        <label className="filter-field"><span>Diet</span><select value={form.diet} onChange={change("diet")}>{["No preference", "Vegetarian", "Non-vegetarian", "Eggetarian", "Vegan"].map((x) => <option key={x}>{x}</option>)}</select></label>
-        <label className="filter-field"><span>Spice preference</span><select value={form.spice} onChange={change("spice")}>{["Mild", "Medium", "Hot"].map((x) => <option key={x}>{x}</option>)}</select></label>
-        <label className="filter-field"><span>Usual budget</span><select value={form.budget} onChange={change("budget")}>{["₹", "₹₹", "₹₹₹", "₹₹₹₹"].map((x) => <option key={x}>{x}</option>)}</select></label>
+  const set = (k) => (e) => { setSaved(false); setForm({ ...form, [k]: e.target.type === "checkbox" ? e.target.checked : e.target.value }); };
+  const toggle = (n) => { setSaved(false); setForm({ ...form, cuisines: form.cuisines.includes(n) ? form.cuisines.filter((x) => x !== n) : [...form.cuisines, n] }); };
+  const submit = (e) => { e.preventDefault(); setProfile(form); setSaved(true); };
+  const input = (label, k, type = "text", ph = "") => <Field label={label}><input type={type} value={form[k]} placeholder={ph} onChange={set(k)} /></Field>;
+  const select = (label, k, opts) => <Field label={label}><select value={form[k]} onChange={set(k)}>{opts.map((o) => <option key={o}>{o}</option>)}</select></Field>;
+  const out = async () => { await logout(); navigate("/"); };
+
+  return (
+    <div className="wrap" style={{ paddingTop: 40, maxWidth: 860 }}>
+      <div style={{ display: "flex", gap: 20, alignItems: "center", flexWrap: "wrap" }}>
+        <div className="av">{(profile.name || profile.email || "?")[0].toUpperCase()}</div>
+        <div><h1 style={{ fontSize: 36 }}>{profile.name || "Your profile"}</h1><p className="meta">{profile.email}</p></div>
       </div>
-      <button className="btn">Save preferences</button>{saved && <span className="saved-message">Saved on this device ✓</span>}
-    </form>
-    <p className="profile-footnote">Ready to discover somewhere new? <Link to="/explore">Explore restaurants ↗</Link></p>
-  </div>;
+      <h2 style={{ fontSize: 28, margin: "36px 0 16px" }}>Edit profile</h2>
+      <form className="box" onSubmit={submit}>
+        <h3 className="fh">Personal details</h3>
+        <div className="fg">
+          {input("Full name", "name")}{input("Email", "email", "email")}{input("Phone number", "phone", "tel", "+91")}
+          {input("Date of birth", "dob", "date")}{select("Gender", "gender", ["Male", "Female", "Non-binary", "Prefer not to say"])}
+        </div>
+        <h3 className="fh">Location</h3>
+        <div className="fg">{input("City", "city")}{input("Neighbourhood", "area", "text", "e.g. Madhapur")}</div>
+        <h3 className="fh">About you</h3>
+        <Field label="Short bio"><textarea rows={3} value={form.bio} placeholder="What do you love to eat?" onChange={set("bio")} /></Field>
+        <h3 className="fh">Food preferences</h3>
+        <div className="fg">
+          {select("Diet", "diet", ["No preference", "Vegetarian", "Non-vegetarian", "Eggetarian", "Vegan"])}
+          {select("Spice level", "spice", ["Mild", "Medium", "Hot"])}
+          {select("Usual budget", "budget", ["₹", "₹₹", "₹₹₹"])}
+        </div>
+        <p className="meta" style={{ margin: "16px 0 0" }}>Favourite cuisines</p>
+        <div className="chips" style={{ marginTop: 8 }}>
+          {CATS.map((c) => <button type="button" key={c.name} className={"chip" + (form.cuisines.includes(c.name) ? " on" : "")} onClick={() => toggle(c.name)}>{c.name}</button>)}
+        </div>
+        <h3 className="fh">Notifications</h3>
+        <label className="tg"><input type="checkbox" checked={form.n1} onChange={set("n1")} /> New restaurants near me</label>
+        <label className="tg"><input type="checkbox" checked={form.n2} onChange={set("n2")} /> Weekly picks by email</label>
+        <div style={{ display: "flex", gap: 14, alignItems: "center", marginTop: 24 }}>
+          <button className="btn">Save changes</button>{saved && <span className="meta">Saved on this device only for now</span>}
+        </div>
+      </form>
+      <section style={{ paddingBottom: 0 }}><h2 style={{ fontSize: 28 }}>Favourite restaurants</h2><p className="meta">Nothing here yet. <Link to="/explore" style={{ textDecoration: "underline" }}>Find a place you love</Link>.</p></section>
+      <section style={{ paddingBottom: 0 }}><h2 style={{ fontSize: 28 }}>Saved places</h2><p className="meta">Places you save will show up here.</p></section>
+      <section><button className="btn ghost" onClick={out}>Log out</button></section>
+    </div>
+  );
 }

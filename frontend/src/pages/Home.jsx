@@ -1,70 +1,49 @@
-import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { api } from "../lib/api";
-import { Grid, LoadingGrid, Notice } from "../components/ui";
+import { useState } from "react";
+import { CATS, grad } from "../data/mock";
+import { useRestaurants } from "../data/restaurants";
+import { Grid, CategoryTile, Status } from "../components/ui";
 
-const CATEGORIES = [
-  ["Biryani & Indian", "Indian"], ["Cafes & coffee", "Cafe"], ["Chinese", "Chinese"],
-  ["Desserts", "Dessert"], ["Street food", "Street Food"], ["Fast food", "Fast Food"],
-];
+const MOSAIC = [[0, 280], [3, 190], [5, 210], [1, 260], [8, 180], [6, 220]];
 
 export default function Home() {
-  const navigate = useNavigate();
+  const nav = useNavigate();
   const [q, setQ] = useState("");
-  const [restaurants, setRestaurants] = useState([]);
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { items, loading, error } = useRestaurants();
+  const go = (e) => { e.preventDefault(); nav(q ? `/explore?q=${encodeURIComponent(q)}` : "/explore"); };
 
-  useEffect(() => {
-    let active = true;
-    Promise.all([api.restaurants({ limit: 12 }), api.stats()])
-      .then(([data, s]) => { if (active) { setRestaurants(data.items); setStats(s); } })
-      .catch((e) => { if (active) setError(`${e.message}. Check that your FastAPI backend is running.`); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, []);
+  const trending = [...items].sort((a, b) => b.rating - a.rating || b.reviews - a.reviews).slice(0, 4);
+  const popular = [...items].sort((a, b) => b.reviews - a.reviews).slice(0, 6);
+  const gems = items.filter((r) => r.rating >= 4.3).sort((a, b) => a.reviews - b.reviews).slice(0, 3);
+  const recent = [...items].sort((a, b) => String(b.created).localeCompare(String(a.created))).slice(0, 4);
+  const st = { loading, error };
 
-  const search = (e) => { e.preventDefault(); navigate(`/explore${q.trim() ? `?q=${encodeURIComponent(q.trim())}` : ""}`); };
-  return <div className="wrap">
-    <section className="hero">
-      <div className="hero-copy">
-        <div className="eyebrow"><span /> THE CITY, SERVED</div>
-        <h1>Good food.<br /><i>Great discoveries.</i></h1>
-        <p>Find your next favourite table, from neighbourhood classics to places you haven't heard of yet.</p>
-        <form className="search" onSubmit={search}>
-          <span className="search-icon">⌕</span>
-          <input aria-label="Search restaurants" placeholder="Search a restaurant, cuisine or area…" value={q} onChange={(e) => setQ(e.target.value)} />
-          <button className="btn">Explore</button>
-        </form>
-        <div className="hero-note">Discover local favourites, one meal at a time.</div>
+  return (
+    <div className="wrap">
+      <div className="hero">
+        <div>
+          <h1>Discover places worth eating at.</h1>
+          <p>Explore hidden gems, popular restaurants and unforgettable food experiences.</p>
+          <form className="search" onSubmit={go}>
+            <input aria-label="Search restaurants" placeholder="Try biryani, cafe, Himayatnagar" value={q} onChange={(e) => setQ(e.target.value)} />
+            <button className="btn">Search</button>
+          </form>
+          <Link className="btn ghost" to="/explore">Explore restaurants</Link>
+        </div>
+        <div className="mosaic">
+          {MOSAIC.map(([i, h], n) => (
+            <div key={n} className="t" style={{ height: h, background: grad(CATS[i]), animationDelay: `${n * 0.08}s` }}><em>{CATS[i].name}</em></div>
+          ))}
+        </div>
       </div>
-      <div className="hero-art">
-        <div className="hero-image hero-image-main"><div className="image-label">A little taste of Hyderabad</div></div>
-        <div className="hero-image hero-image-small"><span>Made for food lovers</span></div>
-        <div className="hero-stamp">FOOD<br />IS A<br /><b>JOURNEY</b></div>
-      </div>
-    </section>
-
-    <section className="stats-row">
-      <div><strong>{stats?.total_restaurants?.toLocaleString("en-IN") ?? "—"}</strong><span>Places to discover</span></div>
-      <div><strong>{stats?.total_users?.toLocaleString("en-IN") ?? "—"}</strong><span>Food explorers</span></div>
-      <div><strong>{stats?.avg_rating ? Number(stats.avg_rating).toFixed(1) : "—"}</strong><span>Community average</span></div>
-      <Link to="/explore" className="text-link">See all restaurants ↗</Link>
-    </section>
-
-    <section>
-      <div className="section-head"><div><div className="eyebrow">THE SHORTLIST</div><h2>Worth a closer look</h2></div><Link className="text-link" to="/explore">View all ↗</Link></div>
-      {error && <Notice>{error}</Notice>}
-      {loading ? <LoadingGrid /> : <Grid list={restaurants} />}
-      {!loading && !restaurants.length && !error && <Notice type="info">Your restaurant collection is empty. Import your restaurant data into MongoDB to get started.</Notice>}
-    </section>
-
-    <section className="category-section">
-      <div className="section-head"><div><div className="eyebrow">FOLLOW YOUR CRAVING</div><h2>Explore by taste</h2></div><Link className="text-link" to="/explore">All categories ↗</Link></div>
-      <div className="category-grid">{CATEGORIES.map(([label, value], i) => <Link key={value} to={`/explore?category=${encodeURIComponent(value)}`} className={`category-tile tile-${i}`}><span>0{i + 1}</span><b>{label}</b><em>Explore ↗</em></Link>)}</div>
-    </section>
-
-    <section className="closing-cta"><div><div className="eyebrow">YOUR TABLE IS WAITING</div><h2>Hungry for something new?</h2><p>Let the next great meal find you.</p></div><Link to="/explore" className="btn btn-light">Find your place ↗</Link></section>
-  </div>;
+      <section><h2>Trending restaurants</h2><Status {...st}><Grid list={trending} /></Status></section>
+      <section><h2>Explore by taste</h2>
+        <div className="cats">{[0, 1, 2, 3, 4, 5, 8, 7].map((i) => <CategoryTile key={i} c={CATS[i]} />)}</div>
+      </section>
+      <section><h2>Popular restaurants</h2><Status {...st}><Grid list={popular} /></Status></section>
+      {gems.length > 0 && <section><h2>Hidden gems</h2><Grid list={gems} min={320} /></section>}
+      <section><h2>Recently added</h2><Status {...st}><Grid list={recent} /></Status></section>
+      <section><div className="cta"><h2>Your next favourite place is waiting.</h2><Link className="btn" to="/explore">Explore restaurants</Link></div></section>
+    </div>
+  );
 }

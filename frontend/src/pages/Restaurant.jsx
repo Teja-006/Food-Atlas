@@ -1,55 +1,47 @@
-import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { api } from "../lib/api";
-import { Notice } from "../components/ui";
+import { catOf, grad } from "../data/mock";
+import { useRestaurant } from "../data/restaurants";
 
 export default function Restaurant() {
   const { id } = useParams();
-  const [restaurant, setRestaurant] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  useEffect(() => {
-    let active = true;
-    setLoading(true); setError("");
-    api.restaurant(id).then((r) => { if (active) setRestaurant(r); })
-      .catch((e) => { if (active) setError(e.message); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, [id]);
+  const { r, error } = useRestaurant(id);
+  if (error) return <div className="wrap pad"><p className="meta">{error}</p><Link to="/explore">Back to Explore</Link></div>;
+  if (!r) return <div className="wrap pad meta">Loading…</div>;
 
-  if (loading) return <div className="wrap page-shell"><div className="detail-skeleton" /></div>;
-  if (error || !restaurant) return <div className="wrap page-shell"><Notice>{error || "Restaurant not found."}</Notice><Link className="text-link" to="/explore">← Back to Explore</Link></div>;
-
-  const r = restaurant;
-  const location = [r.area, r.city].filter(Boolean).join(", ") || r.address || "Location not provided";
-  const mapUrl = Number.isFinite(r.lat) && Number.isFinite(r.lng) ? `https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}` : null;
-  const photos = r.images.length ? r.images : r.image ? [r.image] : [];
-
-  return <div className="wrap detail-page">
-    <Link className="back-link" to="/explore">← Back to Explore</Link>
-    <div className="detail-hero" style={r.image ? { backgroundImage: `linear-gradient(0deg,rgba(10,18,22,.65),transparent 65%),url("${r.image}")` } : undefined}>
-      {!r.image && <span>{r.name}</span>}
-      <div className="detail-title"><div className="eyebrow">FOOD ATLAS FIND</div><h1>{r.name}</h1><p>{r.category}{r.cuisine ? ` · ${r.cuisine}` : ""}</p></div>
-    </div>
-    <div className="detail-layout">
-      <div className="detail-main">
-        <div className="detail-rating"><strong>★ {r.rating ? r.rating.toFixed(1) : "Not rated"}</strong><span>{r.reviewCount ? `${r.reviewCount.toLocaleString("en-IN")} reviews` : "No reviews yet"}</span></div>
-        <h2>About this place</h2><p className="detail-description">{r.description || "There is no description for this restaurant yet."}</p>
-        {photos.length > 0 && <><h2>Photos</h2><div className="photo-grid">{photos.map((url, i) => <img key={`${url}-${i}`} src={url} alt={`${r.name} photo ${i + 1}`} loading="lazy" />)}</div></>}
+  const c = catOf(r.cat);
+  const dest = Number.isFinite(r.lat) && Number.isFinite(r.lng) ? `${r.lat},${r.lng}` : encodeURIComponent(`${r.name} ${r.address}`);
+  const gallery = [0, 1, 2].map((i) => r.images[i] || null);
+  return (
+    <div className="wrap">
+      <div className="cover" style={{ background: grad(c) }}>
+        {r.image ? <img src={r.image} alt={r.name} /> : r.name}
       </div>
-      <aside className="detail-aside">
-        <div className="eyebrow">THE DETAILS</div>
-        <dl>
-          <dt>Location</dt><dd>{location}</dd>
-          {r.address && <><dt>Address</dt><dd>{r.address}</dd></>}
-          <dt>Category</dt><dd>{r.category || "Not specified"}</dd>
-          <dt>Cuisine</dt><dd>{r.cuisine || "Not specified"}</dd>
-          <dt>Price range</dt><dd>{r.priceRange || "Not specified"}</dd>
-          <dt>Opening hours</dt><dd>{typeof r.hours === "string" ? r.hours : r.hours ? JSON.stringify(r.hours) : "Contact restaurant"}</dd>
-          {r.phone && <><dt>Phone</dt><dd><a href={`tel:${r.phone}`}>{r.phone}</a></dd></>}
-        </dl>
-        {mapUrl ? <a className="btn full-btn" href={mapUrl} target="_blank" rel="noreferrer">Get directions ↗</a> : <p className="muted-small">Directions unavailable: this listing has no coordinates.</p>}
-      </aside>
+      <div className="two">
+        <div>
+          <h1 style={{ fontSize: "clamp(34px,5vw,54px)" }}>{r.name}</h1>
+          <p className="meta">★ {r.rating.toFixed(1)} · {[r.primary, r.area].filter(Boolean).join(" · ")}</p>
+          {r.about && (<><h2 style={{ fontSize: 26, margin: "28px 0 8px" }}>About</h2><p style={{ color: "var(--mute)" }}>{r.about}</p></>)}
+          <h2 style={{ fontSize: 26, margin: "28px 0 0" }}>Gallery</h2>
+          <div className="gal">
+            {gallery.map((img, i) => (
+              <div key={i} style={{ background: img ? `center/cover url(${img})` : grad({ a: i % 2 ? c.b : c.a, b: i % 2 ? c.a : c.b }) }} />
+            ))}
+          </div>
+          <h2 style={{ fontSize: 26, margin: "36px 0 8px" }}>Reviews</h2>
+          <p className="meta">{r.reviews ? `${r.reviews} reviews so far.` : "No reviews yet."} Written reviews are coming soon.</p>
+        </div>
+        <aside className="box" style={{ alignSelf: "start" }}>
+          <h3 style={{ fontSize: 22 }}>Details</h3>
+          <dl>
+            {r.cuisine && (<><dt>Cuisine</dt><dd>{r.cuisine}</dd></>)}
+            {r.address && (<><dt>Address</dt><dd>{r.address}</dd></>)}
+            {r.hours && (<><dt>Hours</dt><dd>{r.hours}</dd></>)}
+            {r.phone && (<><dt>Phone</dt><dd><a href={`tel:${r.phone}`}>{r.phone}</a></dd></>)}
+            {r.price && (<><dt>Price</dt><dd>{r.price}</dd></>)}
+          </dl>
+          <a className="btn" style={{ width: "100%", marginTop: 20, textAlign: "center" }} href={`https://www.google.com/maps/dir/?api=1&destination=${dest}`} target="_blank" rel="noopener noreferrer">Get directions</a>
+        </aside>
+      </div>
     </div>
-  </div>;
+  );
 }

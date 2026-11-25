@@ -1,13 +1,13 @@
-import { Link } from "react-router-dom";
-const CONTENT = [
-  ["Discover beyond the usual", "Food Atlas helps you find restaurants, cafes and neighbourhood favourites in one place. Search by name, cuisine or location and explore what is nearby."],
-  ["Find the details that matter", "Restaurant pages bring together the information available in each listing, including cuisine, address, opening hours, photos, ratings and directions."],
-  ["Built around your appetite", "Use filters to narrow the list, browse categories and keep exploring until you find the right place for your next meal."]
+const BLOCKS = [
+  ["Our mission", "Make it easy to find places worth eating at, whether it’s a famous kitchen or a street stall only locals know."],
+  ["Restaurant discovery", "Browse by cuisine, search by dish or neighbourhood, and sort by rating to find the right table quickly."],
+  ["Exploring food experiences", "Every restaurant page shows photos, details and reviews, so you know what to expect before you go."],
 ];
 export default function About() {
-  return <div className="wrap page-shell about-page">
-    <div className="page-intro"><div className="eyebrow">A MAP FOR THE HUNGRY</div><h1>Every meal has<br /><i>a story.</i></h1><p>Food Atlas is your guide to discovering places and flavours worth remembering.</p></div>
-    <div className="about-content">{CONTENT.map(([title, body], i) => <article key={title}><span>0{i + 1}</span><div><h2>{title}</h2><p>{body}</p></div></article>)}</div>
-    <div className="closing-cta"><div><div className="eyebrow">LET'S FIND YOUR NEXT FAVOURITE</div><h2>Follow your appetite.</h2></div><Link className="btn btn-light" to="/explore">Explore Food Atlas ↗</Link></div>
-  </div>;
+  return (
+    <div className="wrap prose" style={{ paddingTop: 40 }}>
+      <h1 style={{ fontSize: "clamp(36px,5vw,56px)" }}>About Food Atlas</h1>
+      {BLOCKS.map(([h, t]) => (<div key={h}><h2 style={{ marginTop: 36, fontSize: 28 }}>{h}</h2><p>{t}</p></div>))}
+    </div>
+  );
 }
