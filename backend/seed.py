@@ -1,7 +1,7 @@
 """Clean data/restaurants.csv and load it into MongoDB Atlas.
 
 Usage (from backend/):  python seed.py          # upsert by name
-                        python seed.py --reset  # wipe restaurants first
+                        python seed.py --reset  # wipe SEEDED restaurants first (approved submissions are kept)
 """
 import csv
 import sys
@@ -63,7 +63,13 @@ def build_doc(row: dict) -> dict | None:
 def main(reset: bool) -> None:
     ensure_indexes()
     if reset:
-        print(f"Removed {restaurants.delete_many({}).deleted_count} existing restaurants")
+        # Only remove CSV-seeded records. Restaurants published through the review workflow
+        # (they carry `submission_id`) or created by the old direct-add endpoint (`added_by`)
+        # are real user contributions and are never deleted by a re-seed.
+        removed = restaurants.delete_many(
+            {"submission_id": {"$exists": False}, "added_by": {"$exists": False}}
+        ).deleted_count
+        print(f"Removed {removed} seeded restaurants (user-contributed ones were kept)")
 
     now = datetime.now(timezone.utc)
     loaded, skipped = 0, []
@@ -74,7 +80,8 @@ def main(reset: bool) -> None:
                 skipped.append(clean(row.get("name")) or "(unnamed)")
                 continue
             restaurants.update_one(
-                {"name": doc["name"]},
+                # never overwrite a restaurant that came from an approved submission
+                {"name": doc["name"], "submission_id": {"$exists": False}},
                 {"$set": {**doc, "updated_at": now}, "$setOnInsert": {"created_at": now}},
                 upsert=True,
             )
