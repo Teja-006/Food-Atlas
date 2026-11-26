@@ -1,6 +1,6 @@
 # Food Atlas
 
-Discover, map and add restaurants.
+Discover, map and suggest restaurants. New places are reviewed by an administrator (in SecureAccess) before they appear.
 
 | Part | Tech | Runs on |
 |---|---|---|
@@ -34,7 +34,7 @@ MongoDB Compass is optional. It is just a desktop viewer: connect it with the sa
 3. **Project settings → General → Your apps → Web (`</>`)**: register an app and copy `apiKey`, `authDomain`, `projectId`, `appId` into `frontend/.env` (the `VITE_FIREBASE_*` lines).
 4. Put the same project ID in `backend/.env` as `FIREBASE_PROJECT_ID`.
 
-The backend needs no secret key file: it checks Firebase's signed tokens against your project ID. New email sign-ups must verify their email (Firebase sends the link) before they can add or edit restaurants. Google sign-ins are verified automatically.
+The backend needs no secret key file: it checks Firebase's signed tokens against your project ID. New email sign-ups must verify their email (Firebase sends the link) before they can submit a place. Google sign-ins are verified automatically.
 
 Email/password and Google sign-in are free up to 50,000 monthly active users.
 
@@ -52,7 +52,7 @@ uvicorn app.main:app --reload --port 8000
 
 API docs: http://localhost:8000/docs
 
-Put your email in `ADMIN_EMAILS` to edit or delete any restaurant (seeded ones have no owner). It only counts if that email is verified in Firebase.
+Restaurants are no longer added or edited directly. Users submit a place; it waits as **pending** until an administrator approves it in SecureAccess (see "Restaurant review" below). `ADMIN_EMAILS` is no longer used.
 
 ## 4. Maps (OpenStreetMap, no key or billing)
 
@@ -83,15 +83,19 @@ Send the Firebase ID token as `Authorization: Bearer <token>` (the frontend does
 | GET | `/api/restaurants` | `q, category, cuisine, min_rating, lat, lng, radius_km, limit, skip` |
 | GET | `/api/restaurants/categories` | Names with counts |
 | GET | `/api/restaurants/{id}` | |
-| POST | `/api/restaurants` | Signed in, email verified |
-| PUT / DELETE | `/api/restaurants/{id}` | Owner or admin only |
+| POST | `/api/submissions` | Signed in, email verified. Creates a **pending** submission (not public) |
+| GET | `/api/submissions/mine` | Your submissions and their status / rejection reason |
+| DELETE | `/api/submissions/{id}` | Withdraw your own pending submission |
+| GET / POST | `/api/internal/admin/submissions...` | **Private.** Only accepts a short-lived token signed by SecureAccess |
+
+There is intentionally no endpoint that creates, edits or deletes a public restaurant directly.
 | GET | `/api/stats` | Totals, average rating, top 5 |
 
 ## Deploying (no local server needed)
 
 Free-tier terms on hosting platforms change, so check each one's current limits.
 
-1. **Backend** on a Python host (Render, Railway, Fly.io and similar). Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`. Root directory: `backend`. Set these environment variables: `MONGO_URI`, `MONGO_DB`, `FIREBASE_PROJECT_ID`, `CORS_ORIGINS` (your frontend URL, no trailing slash), `ADMIN_EMAILS`.
+1. **Backend** on a Python host (Render, Railway, Fly.io and similar). Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`. Root directory: `backend`. Set these environment variables: `MONGO_URI`, `MONGO_DB`, `FIREBASE_PROJECT_ID`, `CORS_ORIGINS` (your frontend URL, no trailing slash), `APP_ENV=production`, `SECUREACCESS_PUBLIC_KEY` (see below).
 2. **Atlas network access:** most hosts use changing IP addresses, so add `0.0.0.0/0` under Network Access. This is only safe with a long random database password, which you should use.
 3. **Frontend** on a static host (Vercel, Netlify, Firebase Hosting). Build command `npm run build`, output folder `dist`. Set the same `VITE_*` variables from `frontend/.env`, with `VITE_API_URL` pointing to your deployed backend. Add a rewrite of all paths to `/index.html` so refreshing `/map` works.
 4. **Firebase:** Authentication → Settings → **Authorized domains**: add your frontend domain, or Google sign-in will fail.
@@ -107,3 +111,20 @@ Free-tier terms on hosting platforms change, so check each one's current limits.
 ## Ideas for next steps
 
 Per-user reviews that compute ratings, favorites, image upload, rate limiting, automated tests.
+
+
+## Restaurant review (how submissions become public)
+
+1. A signed-in user with a verified email submits a place. The backend verifies the Firebase token and stores the submission in the `restaurant_submissions` collection as `pending`, with the submitter's identity (from the token, never from the form) and the time.
+2. Pending places live **only** in that collection. The public `restaurants` collection (used by Explore, Map, search, stats, categories and saved places) never contains them.
+3. An administrator reviews it in SecureAccess. Approving copies the place into `restaurants`; rejecting keeps it unpublished and stores the reason. Both record **who** decided and **when**.
+4. The submitter sees the outcome on **My submissions**. They see the rejection reason but not which admin decided.
+
+The admin API accepts only tokens signed by SecureAccess' private key; Food Atlas holds just the public key (`SECUREACCESS_PUBLIC_KEY`). If it is empty, the admin API is off and nothing else is affected. Food Atlas never calls SecureAccess, so browsing and submitting keep working if SecureAccess is down.
+
+### Tests
+```bash
+cd backend
+pip install -r requirements.txt -r requirements-dev.txt
+pytest
+```
