@@ -1,13 +1,19 @@
 from fastapi import Depends, HTTPException, Request
 
+from .admin_token import AdminTokenError, verify_admin_token
 from .config import get_settings
 from .firebase_auth import verify_id_token
 
 
+def _bearer(request: Request) -> str:
+    scheme, _, token = request.headers.get("Authorization", "").partition(" ")
+    return token if scheme.lower() == "bearer" else ""
+
+
 def current_user(request: Request) -> dict | None:
     """The signed-in user from the Firebase ID token, or None."""
-    scheme, _, token = request.headers.get("Authorization", "").partition(" ")
-    if scheme.lower() != "bearer" or not token:
+    token = _bearer(request)
+    if not token:
         return None
     claims = verify_id_token(token)
     if not claims:
@@ -29,5 +35,21 @@ def require_user(user: dict | None = Depends(current_user)) -> dict:
     return user
 
 
-def is_admin(user: dict) -> bool:
-    return user["email_verified"] and user["email"] in get_settings().admin_set
+def require_admin(request: Request) -> dict:
+    """For the private admin API. Accepts ONLY a short-lived token signed by SecureAccess.
+    A Firebase token (even one belonging to someone with an admin-looking email) is not enough."""
+    s = get_settings()
+    if not s.secureaccess_public_key.strip():
+        raise HTTPException(status_code=503, detail="Admin review is not configured")
+    token = _bearer(request)
+    if not token:
+        raise HTTPException(status_code=401, detail="Admin credentials required")
+    try:
+        return verify_admin_token(
+            token,
+            public_key_pem=s.secureaccess_public_key,
+            issuer=s.secureaccess_issuer,
+            audience=s.admin_token_audience,
+        )
+    except AdminTokenError:
+        raise HTTPException(status_code=401, detail="Invalid admin credentials")

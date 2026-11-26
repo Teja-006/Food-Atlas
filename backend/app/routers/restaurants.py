@@ -1,14 +1,11 @@
 import re
-from datetime import datetime, timezone
+from datetime import datetime
 
 from bson import ObjectId
 from bson.errors import InvalidId
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
-from pymongo import ReturnDocument
+from fastapi import APIRouter, HTTPException, Query
 
 from ..db import restaurants, users
-from ..deps import is_admin, require_user
-from ..schemas import RestaurantIn
 
 router = APIRouter(prefix="/api/restaurants", tags=["restaurants"])
 stats_router = APIRouter(prefix="/api", tags=["stats"])
@@ -28,25 +25,23 @@ def _contains(text: str) -> dict:
     return {"$regex": re.escape(text), "$options": "i"}
 
 
+# Only these stored fields are ever sent to the public. A whitelist (not "everything except
+# a few") means a field added to the database later cannot leak by accident. Older records
+# created before the review workflow still carry an `added_by` user id; it is not listed here.
+PUBLIC_FIELDS = (
+    "name", "description", "cuisine", "category", "address", "phone", "hours",
+    "price_range", "image", "images", "rating", "review_count", "created_at", "updated_at",
+)
+
+
 def _serialize(doc: dict) -> dict:
     lng, lat = doc["location"]["coordinates"]
-    out = {k: v for k, v in doc.items() if k not in ("_id", "location")}
+    out = {k: doc[k] for k in PUBLIC_FIELDS if k in doc}
     out.update(id=str(doc["_id"]), lat=lat, lng=lng)
     for key in ("created_at", "updated_at"):
         if isinstance(out.get(key), datetime):
             out[key] = out[key].isoformat()
     return out
-
-
-def _editable(body: RestaurantIn) -> dict:
-    data = body.model_dump(mode="json", exclude={"lat", "lng"})
-    data["location"] = {"type": "Point", "coordinates": [body.lng, body.lat]}
-    return data
-
-
-def _check_owner(doc: dict, user: dict) -> None:
-    if doc.get("added_by") != user["uid"] and not is_admin(user):
-        raise HTTPException(status_code=403, detail="You can only change restaurants you added")
 
 
 @router.get("")
@@ -101,42 +96,8 @@ def get_restaurant(restaurant_id: str):
     return _serialize(doc)
 
 
-@router.post("", status_code=201)
-def create_restaurant(body: RestaurantIn, user: dict = Depends(require_user)):
-    now = datetime.now(timezone.utc)
-    doc = _editable(body)
-    doc.update(review_count=0, added_by=user["uid"], created_at=now, updated_at=now)
-    restaurants.insert_one(doc)
-    return _serialize(doc)
-
-
-@router.put("/{restaurant_id}")
-def update_restaurant(restaurant_id: str, body: RestaurantIn, user: dict = Depends(require_user)):
-    oid = _oid(restaurant_id)
-    existing = restaurants.find_one({"_id": oid})
-    if not existing:
-        raise NOT_FOUND
-    _check_owner(existing, user)
-
-    changes = _editable(body)
-    changes["updated_at"] = datetime.now(timezone.utc)
-    updated = restaurants.find_one_and_update(
-        {"_id": oid}, {"$set": changes}, return_document=ReturnDocument.AFTER
-    )
-    if not updated:
-        raise NOT_FOUND
-    return _serialize(updated)
-
-
-@router.delete("/{restaurant_id}", status_code=204)
-def delete_restaurant(restaurant_id: str, user: dict = Depends(require_user)):
-    oid = _oid(restaurant_id)
-    existing = restaurants.find_one({"_id": oid}, {"added_by": 1})
-    if not existing:
-        raise NOT_FOUND
-    _check_owner(existing, user)
-    restaurants.delete_one({"_id": oid})
-    return Response(status_code=204)
+# There is deliberately NO create/update/delete endpoint here. Restaurants enter this
+# collection only when an admin approves a submission (see routers/admin_submissions.py).
 
 
 @stats_router.get("/stats")

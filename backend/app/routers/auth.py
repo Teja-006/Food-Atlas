@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from pymongo.errors import DuplicateKeyError
 
 from ..db import users
-from ..deps import current_user, is_admin
+from ..deps import current_user
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -34,6 +34,5 @@ def me(user: dict | None = Depends(current_user)):
             "name": user["name"],
             "email": user["email"],
             "email_verified": user["email_verified"],
-            "is_admin": is_admin(user),
         }
     }
