@@ -71,19 +71,26 @@ export const api = {
   getRestaurant: (id) =>
     request(`/restaurants/${encodeURIComponent(id)}`),
 
-  createRestaurant: (body) =>
-    request("/restaurants", { method: "POST", body }),
+  // New places are never published directly: they are sent for review.
+  submitRestaurant: (body) =>
+    request("/submissions", { method: "POST", body }),
 
-  updateRestaurant: (id, body) =>
-    request(`/restaurants/${encodeURIComponent(id)}`, {
-      method: "PUT",
-      body,
-    }),
+  mySubmissions: () => request("/submissions/mine"),
 
-  deleteRestaurant: (id) =>
-    request(`/restaurants/${encodeURIComponent(id)}`, {
-      method: "DELETE",
-    }),
+  withdrawSubmission: (id) =>
+    request(`/submissions/${encodeURIComponent(id)}`, { method: "DELETE" }),
 
   stats: () => request("/stats"),
+
+  savedPlaces: () => request("/users/me/places"),
+
+  savePlace: (id) =>
+    request(`/users/me/places/${encodeURIComponent(id)}`, {
+      method: "PUT",
+    }),
+
+  unsavePlace: (id) =>
+    request(`/users/me/places/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    }),
 };

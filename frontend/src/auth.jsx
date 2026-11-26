@@ -23,7 +23,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Ask the backend who we are (also gives us is_admin and records the user).
+  // Ask the backend who we are (also records the user).
   const loadProfile = useCallback(async () => {
     if (!auth?.currentUser) return setUser(null);
     try {

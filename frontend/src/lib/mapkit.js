@@ -1,4 +1,5 @@
 import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 // OpenStreetMap's standard tiles. Free, no key. See the tile usage policy in the README.
 export const TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";

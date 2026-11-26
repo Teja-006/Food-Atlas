@@ -60,6 +60,11 @@ footer a{display:block;padding:2px 0}footer a:hover{color:#fff}
 .fl input,.fl select,.fl textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:11px 14px;color:var(--ink);font-size:15px;min-height:46px;width:100%}
 .fg{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
 .fh{font-size:18px;margin:28px 0 14px;padding-top:20px;border-top:1px solid var(--line)}.fh:first-child{margin-top:0;border:0;padding:0}
-.tg{display:flex;gap:10px;align-items:center;padding:6px 0;font-size:15px}
+.tg{display:flex;gap:10px;align-items:center;padding:6px 0;font-size:15px}.wrap {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0 clamp(16px, 3vw, 48px);
+}
 @media(max-width:820px){.hero,.two,footer .wrap{grid-template-columns:1fr}.mosaic{display:none}.links a{padding:6px 9px;font-size:14px}.logo{font-size:18px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

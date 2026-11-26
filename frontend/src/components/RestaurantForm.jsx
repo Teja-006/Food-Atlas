@@ -4,7 +4,7 @@ import LocationPicker from "./LocationPicker.jsx";
 
 const FIELDS = [
   "name", "cuisine", "category", "description", "address", "phone",
-  "hours", "price_range", "image", "rating", "lat", "lng",
+  "hours", "price_range", "image", "lat", "lng",
 ];
 
 export default function RestaurantForm({ initial, onSubmit, submitLabel }) {
@@ -35,7 +35,6 @@ export default function RestaurantForm({ initial, onSubmit, submitLabel }) {
       ...f,
       lat: Number(f.lat),
       lng: Number(f.lng),
-      rating: f.rating === "" ? 0 : Number(f.rating),
       price_range: f.price_range || null,
       image: f.image || null,
       category: f.category || "Other",
@@ -77,16 +76,13 @@ export default function RestaurantForm({ initial, onSubmit, submitLabel }) {
         <input maxLength={250} {...bind("address")} />
       </label>
       <label>Phone
-        <input maxLength={30} {...bind("phone")} />
+        <input maxLength={30} inputMode="tel" pattern="[0-9+()\-\s.]*" title="Digits, spaces and + - ( ) . only" {...bind("phone")} />
       </label>
       <label>Hours
         <input placeholder="11:00 AM - 11:00 PM" maxLength={60} {...bind("hours")} />
       </label>
       <label>Image URL
         <input type="url" placeholder="https://..." {...bind("image")} />
-      </label>
-      <label>Your rating (0 to 5)
-        <input type="number" min="0" max="5" step="0.1" {...bind("rating")} />
       </label>
       <div className="full">
         <span className="label-text">Location</span>
@@ -98,7 +94,7 @@ export default function RestaurantForm({ initial, onSubmit, submitLabel }) {
       </div>
       {error && <p className="error full" role="alert">{error}</p>}
       <div className="full">
-        <button className="btn" disabled={busy}>{busy ? "Saving..." : submitLabel}</button>
+        <button className="btn" disabled={busy}>{busy ? "Sending..." : submitLabel}</button>
       </div>
     </form>
   );

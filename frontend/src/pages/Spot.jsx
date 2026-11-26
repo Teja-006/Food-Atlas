@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import RestaurantForm from "../components/RestaurantForm.jsx";
 
@@ -7,42 +6,20 @@ export function AddSpot() {
   const navigate = useNavigate();
   return (
     <main className="wrap narrow">
-      <h1>Add a spot</h1>
+      <h1>Add a place</h1>
+      <p className="muted">
+        Know a great place that is missing? Tell us about it. Every submission is checked by our
+        team before it appears on Food Atlas, usually within a few days.
+      </p>
       <RestaurantForm
-        submitLabel="Add restaurant"
+        submitLabel="Send for review"
         onSubmit={async (payload) => {
-          const created = await api.createRestaurant(payload);
-          navigate(`/restaurants/${created.id}`);
+          await api.submitRestaurant(payload);
+          navigate("/my-submissions", { state: { justSubmitted: payload.name } });
         }}
       />
     </main>
   );
 }
 
-export function EditSpot() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [r, setR] = useState(null);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    api.getRestaurant(id).then(setR).catch((e) => setError(e.message));
-  }, [id]);
-
-  if (error) return <main className="wrap narrow"><p className="error">{error}</p></main>;
-  if (!r) return <main className="wrap narrow muted">Loading...</main>;
-
-  return (
-    <main className="wrap narrow">
-      <h1>Edit {r.name}</h1>
-      <RestaurantForm
-        initial={r}
-        submitLabel="Save changes"
-        onSubmit={async (payload) => {
-          await api.updateRestaurant(id, payload);
-          navigate(`/restaurants/${id}`);
-        }}
-      />
-    </main>
-  );
-}
+export default AddSpot;

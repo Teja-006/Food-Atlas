@@ -26,7 +26,7 @@ export default function VerifyBanner() {
     <div className="banner" role="status">
       <div className="wrap banner-inner">
         <span>
-          Verify <strong>{user.email}</strong> to add or edit spots. {msg}
+          Verify <strong>{user.email}</strong> to add a place. {msg}
         </span>
         <span className="banner-actions">
           <button className="btn btn-ghost" disabled={busy} onClick={() => run(resendVerification, "Email sent.")}>

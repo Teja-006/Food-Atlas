@@ -95,7 +95,7 @@ export default function MapPage() {
                 <br />
                 {r.cuisine}
                 <br />
-                <Link to={`/restaurants/${r.id}`}>View details</Link>
+                <Link to={`/restaurant/${r.id}`}>View details</Link>
               </Popup>
             </Marker>
           ))}

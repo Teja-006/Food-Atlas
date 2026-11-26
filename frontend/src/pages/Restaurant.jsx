@@ -1,10 +1,37 @@
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { api } from "../api";
+import { useAuth } from "../auth.jsx";
 import { catOf, grad } from "../data/mock";
 import { useRestaurant } from "../data/restaurants";
 
 export default function Restaurant() {
   const { id } = useParams();
   const { r, error } = useRestaurant(id);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [saved, setSaved] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  useEffect(() => {
+    if (!user) { setSaved(false); return undefined; }
+    let live = true;
+    api.savedPlaces()
+      .then((d) => live && setSaved((d.items || []).some((p) => String(p.id) === String(id))))
+      .catch(() => {});
+    return () => { live = false; };
+  }, [user, id]);
+
+  const toggleSave = async () => {
+    if (!user) return navigate("/login", { state: { from: `/restaurant/${id}` } });
+    setBusy(true); setMsg("");
+    try {
+      if (saved) await api.unsavePlace(id); else await api.savePlace(id);
+      setSaved(!saved);
+    } catch (e) { setMsg(e.message); } finally { setBusy(false); }
+  };
+
   if (error) return <div className="wrap pad"><p className="meta">{error}</p><Link to="/explore">Back to Explore</Link></div>;
   if (!r) return <div className="wrap pad meta">Loading…</div>;
 
@@ -40,6 +67,10 @@ export default function Restaurant() {
             {r.price && (<><dt>Price</dt><dd>{r.price}</dd></>)}
           </dl>
           <a className="btn" style={{ width: "100%", marginTop: 20, textAlign: "center" }} href={`https://www.google.com/maps/dir/?api=1&destination=${dest}`} target="_blank" rel="noopener noreferrer">Get directions</a>
+          <button className="btn ghost" style={{ width: "100%", marginTop: 10 }} onClick={toggleSave} disabled={busy}>
+            {saved ? "Saved · Remove" : "Save this place"}
+          </button>
+          {msg && <p className="meta" style={{ marginTop: 10 }}>{msg}</p>}
         </aside>
       </div>
     </div>
