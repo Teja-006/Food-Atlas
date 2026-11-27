@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { catOf, grad } from "../data/mock";
-import { api } from "../api";
+import { api, savedPlacesOnce, clearSavedCache } from "../api";
 import { useAuth } from "../auth.jsx";
 
 export function Navbar() {
@@ -59,7 +59,8 @@ export function RestaurantCard({ r, big }) {
       setSaved(false);
       return () => { active = false; };
     }
-    api.savedPlaces()
+    // Shared request: all cards on the page wait for the same single call.
+    savedPlacesOnce()
       .then((data) => {
         if (active) setSaved((data.items || []).some((item) => String(item.id) === String(r.id)));
       })
@@ -82,6 +83,8 @@ export function RestaurantCard({ r, big }) {
         await api.savePlace(r.id);
         setSaved(true);
       }
+      // The cached list is now out of date, so the next read must fetch fresh data.
+      clearSavedCache();
     } catch (error) {
       setMessage(error.message || "Could not update saved place.");
     } finally {

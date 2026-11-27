@@ -94,3 +94,21 @@ export const api = {
       method: "DELETE",
     }),
 };
+
+// Shared cache: every restaurant card asks for the same saved list,
+// so load it once instead of once per card.
+let savedCache = null;
+
+export function savedPlacesOnce() {
+  if (!savedCache) {
+    savedCache = api.savedPlaces().catch((err) => {
+      savedCache = null; // don't keep failed requests
+      throw err;
+    });
+  }
+  return savedCache;
+}
+
+export function clearSavedCache() {
+  savedCache = null;
+}
