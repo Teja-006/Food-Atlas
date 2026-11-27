@@ -10,7 +10,7 @@ import {
   signOut,
   updateProfile,
 } from "firebase/auth";
-import { api } from "./api";
+import { api, clearSavedCache } from "./api";
 import { auth } from "./lib/firebase";
 
 const AuthContext = createContext(null);
@@ -83,6 +83,7 @@ export function AuthProvider({ children }) {
       resetPassword: (email) => sendPasswordResetEmail(auth, email),
       logout: async () => {
         await signOut(auth);
+        clearSavedCache(); // don't show the previous user's saved state to the next user
         setUser(null);
       },
     };

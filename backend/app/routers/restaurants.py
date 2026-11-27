@@ -55,6 +55,7 @@ def list_restaurants(
     radius_km: float = Query(10, gt=0, le=500),
     limit: int = Query(50, ge=1, le=200),
     skip: int = Query(0, ge=0),
+    bbox: str | None = Query(None, max_length=120),
 ):
     query: dict = {}
     if category and category.lower() != "all":
@@ -71,6 +72,12 @@ def list_restaurants(
         query["location"] = {
             "$geoWithin": {"$centerSphere": [[lng, lat], radius_km / EARTH_RADIUS_KM]}
         }
+    if bbox:
+        try:
+            min_lng, min_lat, max_lng, max_lat = (float(v) for v in bbox.split(","))
+        except ValueError:
+            raise HTTPException(status_code=422, detail="bbox must be minLng,minLat,maxLng,maxLat")
+        query["location"] = {"$geoWithin": {"$box": [[min_lng, min_lat], [max_lng, max_lat]]}}
 
     total = restaurants.count_documents(query)
     cursor = restaurants.find(query).sort([("rating", -1), ("name", 1)]).skip(skip).limit(limit)
