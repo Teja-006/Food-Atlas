@@ -3,6 +3,15 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth.jsx";
 import { firebaseConfigured, friendlyError } from "../lib/firebase";
 
+const PASSWORD_RULES = [
+  { test: (p) => p.length >= 8, label: "At least 8 characters" },
+  { test: (p) => /[a-z]/.test(p), label: "One lowercase letter" },
+  { test: (p) => /[A-Z]/.test(p), label: "One uppercase letter" },
+  { test: (p) => /\d/.test(p), label: "One number" },
+];
+
+const passwordOk = (p) => PASSWORD_RULES.every((rule) => rule.test(p));
+
 export default function Auth({ mode }) {
   const isLogin = mode === "login";
   const { login, register, loginWithGoogle, resetPassword } = useAuth();
@@ -12,6 +21,7 @@ export default function Auth({ mode }) {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [busy, setBusy] = useState(false);
+  const [justRegistered, setJustRegistered] = useState(false);
 
   const bind = (k) => ({
     value: form[k],
@@ -36,9 +46,13 @@ export default function Auth({ mode }) {
 
   const submit = (e) => {
     e.preventDefault();
+    if (!isLogin && !passwordOk(form.password)) {
+      setError("Please meet all password requirements below.");
+      return;
+    }
     run(
       () => (isLogin ? login(form.email, form.password) : register(form.name, form.email, form.password)),
-      goBack
+      () => (isLogin ? goBack() : setJustRegistered(true))
     );
   };
 
@@ -51,6 +65,26 @@ export default function Auth({ mode }) {
       () => setInfo("If an account exists for that email, a reset link is on its way.")
     );
   };
+
+  if (justRegistered) {
+    return (
+      <main className="wrap auth">
+        <h1>You're all set</h1>
+        <p className="muted">
+          We sent a verification link to <strong>{form.email}</strong>. You can fill in your profile
+          now, or do it later from your account page.
+        </p>
+        <div className="auth-form" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <button className="btn" type="button" onClick={() => navigate("/profile", { state: { openEdit: true } })}>
+            Edit profile now
+          </button>
+          <button className="btn ghost" type="button" onClick={goBack}>
+            I'll do it later
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="wrap auth">
@@ -85,7 +119,15 @@ export default function Auth({ mode }) {
               {...bind("password")}
             />
           </label>
-          {!isLogin && <p className="muted small">At least 8 characters. We will email you a link to verify your address.</p>}
+          {!isLogin && (
+            <ul className="pw-rules">
+              {PASSWORD_RULES.map((rule) => (
+                <li key={rule.label} className={rule.test(form.password) ? "ok" : ""}>
+                  {rule.test(form.password) ? "✓" : "•"} {rule.label}
+                </li>
+              ))}
+            </ul>
+          )}
           {isLogin && (
             <button type="button" className="link-btn" onClick={forgot} disabled={busy}>
               Forgot your password?

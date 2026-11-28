@@ -21,18 +21,23 @@ def me(user: dict | None = Depends(current_user)):
             {"firebase_uid": user["uid"]},
             {
                 "$set": {"email": user["email"], "name": user["name"], "last_seen": now},
-                "$setOnInsert": {"created_at": now},
+                "$setOnInsert": {"created_at": now, "profile": {}},
             },
             upsert=True,
         )
     except DuplicateKeyError:  # two first requests raced; the record exists now
         pass
 
+    doc = users.find_one({"firebase_uid": user["uid"]}) or {}
+    profile = doc.get("profile") or {}
+
     return {
         "user": {
             "id": user["uid"],
-            "name": user["name"],
+            # A saved profile name wins over the Firebase display name, once set.
+            "name": profile.get("name") or user["name"],
             "email": user["email"],
             "email_verified": user["email_verified"],
+            "photo_url": profile.get("photo_url") or None,
         }
     }

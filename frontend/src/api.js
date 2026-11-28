@@ -63,6 +63,9 @@ async function request(path, { method = "GET", body, params } = {}) {
 export const api = {
   me: () => request("/auth/me"),
 
+  getProfile: () => request("/users/me/profile"),
+  updateProfile: (body) => request("/users/me/profile", { method: "PUT", body }),
+  
   listRestaurants: (params = {}) =>
     request("/restaurants", { params }),
 

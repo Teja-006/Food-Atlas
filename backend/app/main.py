@@ -7,6 +7,7 @@ from .config import get_settings
 from .db import ensure_indexes
 from .routers import admin_submissions, auth, restaurants, saved_places, submissions
 
+from .routers import admin_submissions, auth, profile, restaurants, saved_places, submissions
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
@@ -54,7 +55,9 @@ app.include_router(restaurants.stats_router)
 app.include_router(saved_places.router)
 app.include_router(submissions.router)
 app.include_router(admin_submissions.router)
-
+app.include_router(submissions.router)
+app.include_router(profile.router)
+app.include_router(admin_submissions.router)
 
 @app.get("/api/health")
 def health():

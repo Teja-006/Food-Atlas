@@ -5,7 +5,8 @@ from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
 
 _CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")  # keeps \t \n \r
 _PHONE = re.compile(r"[0-9+()\-\s.]*")
-
+_PHONE10 = re.compile(r"\d{10}")
+_USERNAME = re.compile(r"[a-zA-Z0-9_]{3,30}")
 
 class SubmissionIn(BaseModel):
     """Only these fields can be set by a user (no mass assignment). Anything else in the
@@ -52,4 +53,48 @@ class RejectIn(BaseModel):
     def _no_control_chars(cls, v: str) -> str:
         if _CONTROL_CHARS.search(v):
             raise ValueError("contains invalid characters")
+        return v
+
+class ProfileIn(BaseModel):
+    """Only these fields can be set by the signed-in user themself."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    name: str = Field("", max_length=80)
+    username: str = Field("", max_length=30)
+    phone: str = Field("", max_length=10)
+    dob: str = Field("", max_length=10)  # yyyy-mm-dd, or empty
+    gender: Literal["Male", "Female", "Non-binary", "Prefer not to say"] = "Prefer not to say"
+    city: str = Field("", max_length=80)
+    area: str = Field("", max_length=80)
+    photo_url: HttpUrl | None = None  # a link to an image; there is no file upload yet
+    notify_near_me: bool = True
+    notify_weekly: bool = False
+
+    @field_validator("name", "city", "area")
+    @classmethod
+    def _no_control_chars(cls, v: str) -> str:
+        if _CONTROL_CHARS.search(v):
+            raise ValueError("contains invalid characters")
+        return v
+
+    @field_validator("username")
+    @classmethod
+    def _username_shape(cls, v: str) -> str:
+        if v and not _USERNAME.fullmatch(v):
+            raise ValueError("username must be 3-30 characters: letters, numbers, underscore only")
+        return v
+
+    @field_validator("phone")
+    @classmethod
+    def _phone_shape(cls, v: str) -> str:
+        if v and not _PHONE10.fullmatch(v):
+            raise ValueError("phone number must be exactly 10 digits")
+        return v
+
+    @field_validator("dob")
+    @classmethod
+    def _dob_shape(cls, v: str) -> str:
+        if v and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", v):
+            raise ValueError("date of birth must be in yyyy-mm-dd format")
         return v

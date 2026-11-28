@@ -53,3 +53,9 @@ def require_admin(request: Request) -> dict:
         )
     except AdminTokenError:
         raise HTTPException(status_code=401, detail="Invalid admin credentials")
+
+def require_login(user: dict | None = Depends(current_user)) -> dict:
+    """For actions any signed-in user can do, verified email or not (unlike require_user)."""
+    if not user:
+        raise HTTPException(status_code=401, detail="Please log in first")
+    return user

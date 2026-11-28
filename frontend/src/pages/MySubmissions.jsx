@@ -48,6 +48,7 @@ export default function MySubmissions() {
 
   return (
     <main className="wrap narrow">
+      <Link to="/profile" className="back-link">← Back to profile</Link>
       <h1>My submissions</h1>
 
       {justSubmitted && (
@@ -73,26 +74,24 @@ export default function MySubmissions() {
               <h3>{item.name}</h3>
               <span className={`status-pill s-${item.status}`}>{LABELS[item.status] || item.status}</span>
             </div>
-            <p className="muted small">
-              {[item.data?.cuisine, item.data?.category].filter(Boolean).join(" · ")}
-              {" · "}Sent {when(item.submitted_at)}
-              {item.decided_at && ` · Decided ${when(item.decided_at)}`}
-            </p>
+
+            <div className="sub-meta">
+              {item.data?.cuisine && <span className="sub-tag">{item.data.cuisine}</span>}
+              {item.data?.category && <span className="sub-tag">{item.data.category}</span>}
+              <span className="sub-date">Sent {when(item.submitted_at)}</span>
+              {item.decided_at && <span className="sub-date">Decided {when(item.decided_at)}</span>}
+            </div>
 
             {item.status === "pending" && (
-              <p className="small">
-                We will let it appear on Food Atlas as soon as it has been checked.
-              </p>
+              <p className="sub-note">We will let it appear on Food Atlas as soon as it has been checked.</p>
             )}
             {item.status === "approved" && item.restaurant_id && (
-              <p className="small">
-                It is live! <Link to={`/restaurant/${item.restaurant_id}`} style={{ textDecoration: "underline" }}>View the listing</Link>.
+              <p className="sub-note">
+                It is live! <Link to={`/restaurant/${item.restaurant_id}`}>View the listing →</Link>
               </p>
             )}
             {item.status === "rejected" && (
-              <p className="small">
-                {item.reason ? <>Reason: {item.reason}</> : "It was not approved."}
-              </p>
+              <p className="sub-note">{item.reason ? <>Reason: {item.reason}</> : "It was not approved."}</p>
             )}
 
             {item.status === "pending" && (

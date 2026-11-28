@@ -1,12 +1,20 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { catOf, grad } from "../data/mock";
 import { api, savedPlacesOnce, clearSavedCache } from "../api";
 import { useAuth } from "../auth.jsx";
 
 export function Navbar() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const cls = ({ isActive }) => (isActive ? "on" : "");
+  const initial = (user?.name || user?.email || "?")[0].toUpperCase();
+
+  async function handleLogout() {
+    await logout();
+    navigate("/");
+  }
+
   return (
     <nav>
       <div className="wrap">
@@ -18,7 +26,33 @@ export function Navbar() {
           <NavLink to="/add" className={cls}>Add a place</NavLink>
           <NavLink to="/about" className={cls}>About</NavLink>
         </div>
-        <Link className="btn acct" to={user ? "/profile" : "/login"}>{user ? "Account" : "Log in"}</Link>
+
+        {user ? (
+          <div className="navbar-account">
+            <Link className="btn acct avatar-link" to="/profile">
+              {user.photo_url ? (
+                <img className="avatar-thumb" src={user.photo_url} alt="" />
+              ) : (
+                <span className="avatar-thumb avatar-fallback">{initial}</span>
+              )}
+            </Link>
+            <button
+              type="button"
+              className="logout-icon-btn"
+              onClick={handleLogout}
+              title="Log out"
+              aria-label="Log out"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+            </button>
+          </div>
+        ) : (
+          <Link className="btn acct" to="/login">Log in</Link>
+        )}
       </div>
     </nav>
   );
