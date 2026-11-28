@@ -95,3 +95,8 @@
 .navbar-account{display:flex;align-items:center;gap:10px}
 .logout-icon-btn{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;transition:border-color .2s,color .2s}
 .logout-icon-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+.image-url-list{display:flex;flex-direction:column;gap:10px}
+.image-url-row{display:flex;gap:8px;align-items:center}
+.image-url-row input{flex:1}
+.image-url-row .link-btn{white-space:nowrap;font-size:13px}

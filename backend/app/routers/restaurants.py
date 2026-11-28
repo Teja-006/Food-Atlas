@@ -30,7 +30,7 @@ def _contains(text: str) -> dict:
 # created before the review workflow still carry an `added_by` user id; it is not listed here.
 PUBLIC_FIELDS = (
     "name", "description", "cuisine", "category", "address", "phone", "hours",
-    "price_range", "image", "images", "rating", "review_count", "created_at", "updated_at",
+    "images", "menu_image", "rating", "review_count", "created_at", "updated_at",
 )
 
 

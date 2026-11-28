@@ -2,14 +2,23 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import LocationPicker from "./LocationPicker.jsx";
 
-const FIELDS = [
-  "name", "cuisine", "category", "description", "address", "phone",
-  "hours", "price_range", "image", "lat", "lng",
-];
+const MAX_IMAGES = 6;
 
 export default function RestaurantForm({ initial, onSubmit, submitLabel }) {
-  const [f, setF] = useState(() =>
-    Object.fromEntries(FIELDS.map((k) => [k, initial?.[k] ?? ""]))
+  const [f, setF] = useState({
+    name: initial?.name ?? "",
+    cuisine: initial?.cuisine ?? "",
+    category: initial?.category ?? "",
+    description: initial?.description ?? "",
+    address: initial?.address ?? "",
+    phone: initial?.phone ?? "",
+    hours: initial?.hours ?? "",
+    menu_image: initial?.menu_image ?? "",
+    lat: initial?.lat ?? "",
+    lng: initial?.lng ?? "",
+  });
+  const [images, setImages] = useState(
+    initial?.images?.length ? initial.images : [""]
   );
   const [cats, setCats] = useState([]);
   const [customCategory, setCustomCategory] = useState(false);
@@ -19,7 +28,6 @@ export default function RestaurantForm({ initial, onSubmit, submitLabel }) {
   useEffect(() => {
     api.categories().then((list) => {
       setCats(list);
-      // If editing something whose category isn't in the known list, start in "new category" mode.
       if (initial?.category && !list.some((c) => c.name === initial.category)) {
         setCustomCategory(true);
       }
@@ -34,6 +42,18 @@ export default function RestaurantForm({ initial, onSubmit, submitLabel }) {
   function setPhone(e) {
     const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
     setF((prev) => ({ ...prev, phone: digits }));
+  }
+
+  function setImageAt(i, value) {
+    setImages((prev) => prev.map((v, idx) => (idx === i ? value : v)));
+  }
+
+  function addImageField() {
+    setImages((prev) => (prev.length < MAX_IMAGES ? [...prev, ""] : prev));
+  }
+
+  function removeImageField(i) {
+    setImages((prev) => prev.filter((_, idx) => idx !== i));
   }
 
   async function submit(e) {
@@ -55,8 +75,8 @@ export default function RestaurantForm({ initial, onSubmit, submitLabel }) {
       ...f,
       lat: Number(f.lat),
       lng: Number(f.lng),
-      price_range: f.price_range || null,
-      image: f.image || null,
+      menu_image: f.menu_image || null,
+      images: images.map((v) => v.trim()).filter(Boolean),
     };
     setBusy(true);
     try {
@@ -97,18 +117,11 @@ export default function RestaurantForm({ initial, onSubmit, submitLabel }) {
           </select>
         ) : (
           <>
-            <input
-              placeholder="Name your new category"
-              maxLength={60}
-              {...bind("category")}
-            />
+            <input placeholder="Name your new category" maxLength={60} {...bind("category")} />
             <button
               type="button"
               className="link-btn"
-              onClick={() => {
-                setCustomCategory(false);
-                setF((prev) => ({ ...prev, category: "" }));
-              }}
+              onClick={() => { setCustomCategory(false); setF((prev) => ({ ...prev, category: "" })); }}
             >
               Choose an existing category instead
             </button>
@@ -121,12 +134,15 @@ export default function RestaurantForm({ initial, onSubmit, submitLabel }) {
         </p>
       )}
 
+      {/* Price range — removed for now. To bring it back, uncomment this block
+          and add price_range back into the submitted payload.
       <label>Price range
         <select {...bind("price_range")}>
           <option value="">Not set</option>
           <option>₹</option><option>₹₹</option><option>₹₹₹</option><option>₹₹₹₹</option>
         </select>
       </label>
+      */}
 
       <h3 className="fh full">Description</h3>
       <label className="full">
@@ -138,22 +154,37 @@ export default function RestaurantForm({ initial, onSubmit, submitLabel }) {
         <input maxLength={250} {...bind("address")} />
       </label>
       <label>Phone
-        <input
-          type="tel"
-          inputMode="numeric"
-          maxLength={10}
-          placeholder="10-digit number"
-          value={f.phone}
-          onChange={setPhone}
-        />
+        <input type="tel" inputMode="numeric" maxLength={10} placeholder="10-digit number" value={f.phone} onChange={setPhone} />
       </label>
       <label>Hours
         <input placeholder="11:00 AM - 11:00 PM" maxLength={60} {...bind("hours")} />
       </label>
 
-      <h3 className="fh full">Photo</h3>
-      <label className="full">Image URL
-        <input type="url" placeholder="https://..." {...bind("image")} />
+      <h3 className="fh full">Photos</h3>
+      <p className="muted small full" style={{ margin: "-6px 0 0" }}>
+        Paste links to photos (there is no file upload yet — add as many as you like).
+      </p>
+      <div className="full image-url-list">
+        {images.map((url, i) => (
+          <div className="image-url-row" key={i}>
+            <input
+              type="url"
+              placeholder="https://..."
+              value={url}
+              onChange={(e) => setImageAt(i, e.target.value)}
+            />
+            {images.length > 1 && (
+              <button type="button" className="link-btn" onClick={() => removeImageField(i)}>Remove</button>
+            )}
+          </div>
+        ))}
+        {images.length < MAX_IMAGES && (
+          <button type="button" className="btn-ghost btn" onClick={addImageField}>+ Add another photo</button>
+        )}
+      </div>
+
+      <label className="full">Menu photo URL (optional)
+        <input type="url" placeholder="https://..." {...bind("menu_image")} />
       </label>
 
       <h3 className="fh full">Location</h3>

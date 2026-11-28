@@ -7,11 +7,11 @@ export function AddSpot() {
   return (
     <main className="wrap narrow">
       <Link to="/profile" className="back-link">← Back to profile</Link>
-      <h1>Add a place</h1>
+      <h1>Know a place we're missing?</h1>
       <p className="muted">
-        Know a great place that is missing? Tell us about it. Every submission — including any new
-        category you request — is checked by our team before it appears on Food Atlas, usually
-        within a few days.
+        Found a spot that deserves to be on the map? Add it to Food Atlas. Every submission —
+        including any new category you request — is checked by our team before it appears,
+        usually within a few days.
       </p>
       <RestaurantForm
         submitLabel="Send for review"

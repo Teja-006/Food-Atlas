@@ -15,6 +15,7 @@ collection never contains unapproved data, so no public query needs a status fil
 No FastAPI/pymongo imports here, so the rules can be tested without a database.
 """
 from datetime import datetime, timedelta, timezone
+from pydoc import doc
 
 PENDING, APPROVED, REJECTED, WITHDRAWN = "pending", "approved", "rejected", "withdrawn"
 STATUSES = (PENDING, APPROVED, REJECTED, WITHDRAWN)
@@ -111,7 +112,7 @@ def public_doc(sub: dict) -> dict:
     no submitter identity, no review notes."""
     t = utcnow()
     doc = dict(sub["data"])
-    doc["images"] = [doc["image"]] if doc.get("image") else []
+    doc["images"] = list(doc.get("images") or [])
     doc.update(rating=0, review_count=0, created_at=t, updated_at=t, submission_id=str(sub["_id"]))
     return doc
 

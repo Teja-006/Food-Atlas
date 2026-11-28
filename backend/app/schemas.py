@@ -25,7 +25,8 @@ class SubmissionIn(BaseModel):
     phone: str = Field("", max_length=10)
     hours: str = Field("", max_length=60)
     price_range: Literal["₹", "₹₹", "₹₹₹", "₹₹₹₹"] | None = None
-    image: HttpUrl | None = None  # http(s) only
+    images: list[HttpUrl] = Field(default_factory=list, max_length=6)
+    menu_image: HttpUrl | None = None
 
     @field_validator("phone")
     @classmethod
