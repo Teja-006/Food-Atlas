@@ -50,6 +50,7 @@ def list_restaurants(
     category: str | None = Query(None, max_length=60),
     cuisine: str | None = Query(None, max_length=60),
     min_rating: float = Query(0, ge=0, le=5),
+    sort: str = Query("rating", pattern="^(rating|name)$"),
     lat: float | None = Query(None, ge=-90, le=90),
     lng: float | None = Query(None, ge=-180, le=180),
     radius_km: float = Query(10, gt=0, le=500),
@@ -79,9 +80,11 @@ def list_restaurants(
             raise HTTPException(status_code=422, detail="bbox must be minLng,minLat,maxLng,maxLat")
         query["location"] = {"$geoWithin": {"$box": [[min_lng, min_lat], [max_lng, max_lat]]}}
 
+    order = [("rating", -1), ("name", 1)] if sort == "rating" else [("name", 1)]
     total = restaurants.count_documents(query)
-    cursor = restaurants.find(query).sort([("rating", -1), ("name", 1)]).skip(skip).limit(limit)
+    cursor = restaurants.find(query).sort(order).skip(skip).limit(limit)
     return {"items": [_serialize(d) for d in cursor], "total": total}
+
 
 
 # Declared before "/{restaurant_id}" so it isn't treated as an id.

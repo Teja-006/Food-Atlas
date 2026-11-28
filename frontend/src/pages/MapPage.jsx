@@ -1,49 +1,46 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from "react-leaflet";
+import { GoogleMap, InfoWindow, Marker, useJsApiLoader } from "@react-google-maps/api";
 import { api } from "../api";
-import { DEFAULT_CENTER, TILE_ATTRIBUTION, TILE_URL, ratingLabel, stampIcon } from "../lib/mapkit";
+import { DEFAULT_CENTER, ratingLabel } from "../lib/mapkit";
 
 const MAX_MARKERS = 200;
-
-// Flies to a point when one is chosen from the list or "Near me".
-function Focus({ target }) {
-  const map = useMap();
-  useEffect(() => {
-    if (target) map.flyTo(target, 16, { duration: 0.6 });
-  }, [target, map]);
-  return null;
-}
-
-// Reports the visible area whenever the map is panned or zoomed.
-function BoundsWatcher({ onChange }) {
-  const map = useMapEvents({
-    moveend() {
-      onChange(map.getBounds());
-    },
-  });
-  useEffect(() => {
-    onChange(map.getBounds());
-  }, [map, onChange]);
-  return null;
-}
+const containerStyle = { width: "100%", height: "100%" };
+const LOADER_ID = "food-atlas-google-maps";
 
 export default function MapPage() {
+  const { isLoaded, loadError } = useJsApiLoader({
+    id: LOADER_ID,
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+  });
+
+  const mapRef = useRef(null);
   const [category, setCategory] = useState("All");
   const [cats, setCats] = useState([]);
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [bbox, setBbox] = useState(null);
   const [focus, setFocus] = useState(null);
+  const [active, setActive] = useState(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
     api.categories().then(setCats).catch(() => {});
   }, []);
 
-  const onBounds = useCallback((b) => {
-    setBbox(`${b.getWest()},${b.getSouth()},${b.getEast()},${b.getNorth()}`);
+  const reportBounds = useCallback(() => {
+    const map = mapRef.current;
+    const b = map?.getBounds();
+    if (!b) return;
+    const sw = b.getSouthWest();
+    const ne = b.getNorthEast();
+    setBbox(`${sw.lng()},${sw.lat()},${ne.lng()},${ne.lat()}`);
   }, []);
+
+  const onLoad = useCallback((map) => {
+    mapRef.current = map;
+    reportBounds();
+  }, [reportBounds]);
 
   useEffect(() => {
     if (!bbox) return undefined;
@@ -67,6 +64,13 @@ export default function MapPage() {
     };
   }, [bbox, category]);
 
+  useEffect(() => {
+    if (focus && mapRef.current) {
+      mapRef.current.panTo({ lat: focus[0], lng: focus[1] });
+      mapRef.current.setZoom(16);
+    }
+  }, [focus]);
+
   const locate = () =>
     navigator.geolocation.getCurrentPosition(
       (p) => setFocus([p.coords.latitude, p.coords.longitude]),
@@ -86,6 +90,7 @@ export default function MapPage() {
           </label>
           <button className="btn btn-ghost" onClick={locate}>Near me</button>
         </div>
+        {loadError && <p className="error" role="alert">Could not load the map. Check the API key.</p>}
         {error && <p className="error" role="alert">{error}</p>}
         <p className="muted small">
           Showing {items.length} of {total} in this area
@@ -94,7 +99,7 @@ export default function MapPage() {
         <ul className="map-list">
           {items.map((r) => (
             <li key={r.id}>
-              <button onClick={() => setFocus([r.lat, r.lng])}>
+              <button onClick={() => { setFocus([r.lat, r.lng]); setActive(r); }}>
                 <span className="stamp pin">{ratingLabel(r.rating)}</span>
                 <span>
                   <strong>{r.name}</strong>
@@ -108,22 +113,38 @@ export default function MapPage() {
       </aside>
 
       <div className="map-canvas">
-        <MapContainer center={DEFAULT_CENTER} zoom={12}>
-          <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} maxZoom={19} />
-          <BoundsWatcher onChange={onBounds} />
-          <Focus target={focus} />
-          {items.map((r) => (
-            <Marker key={r.id} position={[r.lat, r.lng]} icon={stampIcon(ratingLabel(r.rating))}>
-              <Popup>
-                <strong>{r.name}</strong>
-                <br />
-                {r.cuisine}
-                <br />
-                <Link to={`/restaurant/${r.id}`}>View details</Link>
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
+        {isLoaded ? (
+          <GoogleMap
+            mapContainerStyle={containerStyle}
+            center={DEFAULT_CENTER}
+            zoom={12}
+            onLoad={onLoad}
+            onIdle={reportBounds}
+            options={{ streetViewControl: false, mapTypeControl: false, fullscreenControl: false }}
+          >
+            {items.map((r) => (
+              <Marker
+                key={r.id}
+                position={{ lat: r.lat, lng: r.lng }}
+                label={{ text: ratingLabel(r.rating), fontSize: "11px", fontWeight: "700" }}
+                onClick={() => setActive(r)}
+              />
+            ))}
+            {active && (
+              <InfoWindow position={{ lat: active.lat, lng: active.lng }} onCloseClick={() => setActive(null)}>
+                <div>
+                  <strong>{active.name}</strong>
+                  <br />
+                  {active.cuisine}
+                  <br />
+                  <Link to={`/restaurant/${active.id}`}>View details</Link>
+                </div>
+              </InfoWindow>
+            )}
+          </GoogleMap>
+        ) : (
+          <p className="muted small" style={{ padding: 20 }}>Loading map…</p>
+        )}
       </div>
     </main>
   );

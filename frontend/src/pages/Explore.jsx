@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { CATS, grad } from "../data/mock";
 import { useRestaurantSearch } from "../data/restaurants";
+import { CATS, grad } from "../data/mock";
 import { api } from "../api";
 import { Grid, Status } from "../components/ui";
 
@@ -25,6 +25,7 @@ export default function Explore() {
   const [cats, setCats] = useState([]);
   const debouncedQ = useDebounced(q.trim(), 400);
 
+  
   const { items, total, loading, loadingMore, error, loadMore, hasMore } =
     useRestaurantSearch({ q: debouncedQ, category: cat, sort });
 
@@ -72,15 +73,15 @@ export default function Explore() {
           <b>All</b>
         </button>
         {cats.map((c) => (
-          <button
-            key={c.name}
-            className={"ct" + (cat === c.name ? " on" : "")}
-            style={{ background: colourFor(c.name) }}
-            onClick={() => setCat(c.name)}
-          >
-            <b>{c.name}</b>
-          </button>
-        ))}
+  <button
+    key={c.name}
+    className={"ct" + (cat === c.name ? " on" : "")}
+    style={{ background: grad(CATS.find((x) => x.name === c.name) || { a: "#2a3547", b: "#0f1b2d" }) }}
+    onClick={() => setCat(c.name)}
+  >
+    <b>{c.name}</b>
+  </button>
+))}
       </div>
 
       <Status loading={loading} error={error}>

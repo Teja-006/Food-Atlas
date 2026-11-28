@@ -22,16 +22,17 @@ class SubmissionIn(BaseModel):
     lat: float = Field(ge=-90, le=90)
     lng: float = Field(ge=-180, le=180)
     address: str = Field("", max_length=250)
-    phone: str = Field("", max_length=30)
+    phone: str = Field("", max_length=10)
     hours: str = Field("", max_length=60)
     price_range: Literal["₹", "₹₹", "₹₹₹", "₹₹₹₹"] | None = None
     image: HttpUrl | None = None  # http(s) only
 
-    @field_validator("name", "description", "cuisine", "category", "address", "phone", "hours")
+    @field_validator("phone")
     @classmethod
-    def _no_control_chars(cls, v: str) -> str:
-        if _CONTROL_CHARS.search(v):
-            raise ValueError("contains invalid characters")
+    def _phone_shape(cls, v: str) -> str:
+        if v and not _PHONE10.fullmatch(v):
+            raise ValueError("phone number must be exactly 10 digits")
+        return v
         return v
 
     @field_validator("phone")

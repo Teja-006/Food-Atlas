@@ -1,26 +1,44 @@
-import { MapContainer, Marker, TileLayer, useMapEvents } from "react-leaflet";
-import { DEFAULT_CENTER, TILE_ATTRIBUTION, TILE_URL, stampIcon } from "../lib/mapkit";
+import { useCallback } from "react";
+import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
+import { DEFAULT_CENTER } from "../lib/mapkit";
 
-const icon = stampIcon("•");
-
-function ClickHandler({ onPick }) {
-  useMapEvents({
-    click: (e) => onPick(+e.latlng.lat.toFixed(6), +e.latlng.lng.toFixed(6)),
-  });
-  return null;
-}
+const containerStyle = { width: "100%", height: "100%" };
+const LOADER_ID = "food-atlas-google-maps";
 
 export default function LocationPicker({ lat, lng, onChange }) {
+  const { isLoaded, loadError } = useJsApiLoader({
+    id: LOADER_ID,
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+  });
+
   const has = lat !== "" && lng !== "";
-  const center = has ? [Number(lat), Number(lng)] : DEFAULT_CENTER;
+  const center = has ? { lat: Number(lat), lng: Number(lng) } : DEFAULT_CENTER;
+
+  const handleClick = useCallback(
+    (e) => onChange(+e.latLng.lat().toFixed(6), +e.latLng.lng().toFixed(6)),
+    [onChange]
+  );
+
+  if (loadError) {
+    return <p className="error">Could not load the map. Check the Google Maps API key.</p>;
+  }
+
   return (
     <div>
       <div className="picker">
-        <MapContainer center={center} zoom={has ? 15 : 10}>
-          <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} maxZoom={19} />
-          <ClickHandler onPick={onChange} />
-          {has && <Marker position={center} icon={icon} />}
-        </MapContainer>
+        {isLoaded ? (
+          <GoogleMap
+            mapContainerStyle={containerStyle}
+            center={center}
+            zoom={has ? 15 : 11}
+            onClick={handleClick}
+            options={{ streetViewControl: false, mapTypeControl: false, fullscreenControl: false }}
+          >
+            {has && <Marker position={center} />}
+          </GoogleMap>
+        ) : (
+          <p className="muted small" style={{ padding: 16 }}>Loading map…</p>
+        )}
       </div>
       <p className="muted small">
         {has ? `Selected: ${lat}, ${lng}` : "Click the map to place the restaurant."}
